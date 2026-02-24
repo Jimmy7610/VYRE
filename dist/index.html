@@ -7,8 +7,8 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#050505" />
   <title>VYRE</title>
-  <script type="module" crossorigin src="/assets/index-CQD7amqx.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BzJc-EBB.css">
+  <script type="module" crossorigin src="/assets/index-B6e-2Y-l.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BoT8HRrn.css">
 </head>
 
 <body class="bg-black text-gray-100 font-sans antialiased overflow-hidden selection:bg-brand-orange/30">
@@ -92,6 +92,59 @@
           </button>
         </div>
       </header>
+
+      <!-- Compose Section (Hidden if not authed) -->
+      <div id="compose-container"
+        class="hidden flex-col border-b border-gray-900 bg-black p-4 shrink-0 transition-opacity">
+        <div class="flex gap-3">
+          <!-- Avatar Placeholder -->
+          <div
+            class="w-10 h-10 rounded-sm outline outline-1 outline-gray-800 bg-gray-900 flex-shrink-0 flex items-center justify-center">
+            <span id="compose-avatar-initial" class="text-xs font-mono text-gray-500">U</span>
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col pt-1">
+            <textarea id="compose-text" rows="2" maxlength="500" placeholder="Broadcast a signal..."
+              class="w-full bg-transparent text-gray-200 font-sans text-sm resize-none focus:outline-none placeholder:text-gray-600 custom-scrollbar"></textarea>
+
+            <!-- Image Preview -->
+            <div id="compose-image-preview-container"
+              class="hidden relative mt-2 w-full rounded-sm overflow-hidden border border-gray-800 bg-gray-900 aspect-video">
+              <img id="compose-image-preview" src="" alt="Preview" class="w-full h-full object-cover">
+              <button id="compose-image-remove"
+                class="absolute top-2 right-2 w-7 h-7 bg-black/70 backdrop-blur text-white flex items-center justify-center rounded-sm hover:bg-black transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compose Actions -->
+        <div class="flex items-center justify-between mt-3 pl-13">
+          <div class="flex items-center gap-2">
+            <label for="compose-file"
+              class="cursor-pointer text-gray-500 hover:text-brand-orange transition-colors group">
+              <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                </path>
+              </svg>
+            </label>
+            <input type="file" id="compose-file" accept="image/png, image/jpeg, image/webp" class="hidden">
+            <span id="compose-error" class="text-xs text-red-500 font-mono ml-2"></span>
+          </div>
+
+          <button id="compose-btn" disabled
+            class="px-5 py-1.5 bg-gray-100 text-black font-semibold text-xs uppercase tracking-widest rounded-sm hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all relative overflow-hidden group">
+            <span id="compose-btn-text">Post</span>
+            <div id="compose-btn-spinner" class="hidden absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div class="w-3.5 h-3.5 border-2 border-gray-400 border-t-black rounded-full animate-spin"></div>
+            </div>
+          </button>
+        </div>
+      </div>
 
       <!-- Dynamic Content Area -->
       <main id="feed-container"

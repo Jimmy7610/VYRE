@@ -22,8 +22,22 @@ const btnSignup = document.getElementById('btn-signup');
 const userHandle = document.getElementById('user-handle');
 const betaPill = document.getElementById('beta-pill');
 
+// Compose Elements
+const composeContainer = document.getElementById('compose-container');
+const composeText = document.getElementById('compose-text') as HTMLTextAreaElement;
+const composeFile = document.getElementById('compose-file') as HTMLInputElement;
+const composeImagePreviewContainer = document.getElementById('compose-image-preview-container');
+const composeImagePreview = document.getElementById('compose-image-preview') as HTMLImageElement;
+const composeImageRemove = document.getElementById('compose-image-remove');
+const composeError = document.getElementById('compose-error');
+const composeBtn = document.getElementById('compose-btn') as HTMLButtonElement;
+const composeBtnText = document.getElementById('compose-btn-text');
+const composeBtnSpinner = document.getElementById('compose-btn-spinner');
+const composeAvatarInitial = document.getElementById('compose-avatar-initial');
+
 // Global Auth State
 let currentUser: any = null;
+let currentImageFile: File | null = null;
 
 // TEMP: Beta Access Flag Enforcement
 // MUST BE REMOVED BEFORE PRODUCTION LAUNCH
@@ -51,8 +65,13 @@ function handleAuthChange(session: any) {
       const emailPrefix = currentUser.email?.split('@')[0] || 'User';
       userHandle.textContent = `@${emailPrefix}`;
       userHandle.classList.remove('hidden');
+      if (composeAvatarInitial) composeAvatarInitial.textContent = emailPrefix.charAt(0).toUpperCase();
     }
     betaPill?.classList.add('hidden');
+
+    // Enable Compose
+    composeContainer?.classList.remove('hidden');
+    composeContainer?.classList.add('flex');
 
     showApp();
     loadFeed();
@@ -60,6 +79,9 @@ function handleAuthChange(session: any) {
     // If we're showing the app but no session exists, we must be in beta mode
     // (Or user just logged out)
     if (userHandle) userHandle.classList.add('hidden');
+    // Disable Compose
+    composeContainer?.classList.add('hidden');
+    composeContainer?.classList.remove('flex');
     if (mainApp && !mainApp.classList.contains('hidden') && (import.meta as any).env.VITE_BETA_MODE !== 'true') {
       showAuth();
     }
@@ -139,6 +161,114 @@ btnSignup?.addEventListener('click', async () => {
     authErrorMsg.textContent = 'Check your email for a confirmation link.';
     authErrorMsg.classList.remove('text-red-500');
     authErrorMsg.classList.add('text-brand-green');
+  }
+});
+
+// Compose Logic
+composeText?.addEventListener('input', () => {
+  if (composeError) composeError.textContent = '';
+  composeBtn.disabled = composeText.value.trim().length === 0;
+});
+
+composeFile?.addEventListener('change', (e) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  if (composeError) composeError.textContent = '';
+
+  // Validate File (5MB Limit)
+  if (file.size > 5 * 1024 * 1024) {
+    if (composeError) composeError.textContent = 'Image must be less than 5MB';
+    composeFile.value = '';
+    return;
+  }
+
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    if (composeError) composeError.textContent = 'Only JPG, PNG, or WEBP allowed';
+    composeFile.value = '';
+    return;
+  }
+
+  currentImageFile = file;
+
+  // Show Preview
+  const objectUrl = URL.createObjectURL(file);
+  if (composeImagePreview) composeImagePreview.src = objectUrl;
+  composeImagePreviewContainer?.classList.remove('hidden');
+
+  // Enable post button even if text is empty? No, keep text mandatory for now or allow just image.
+  // Let's allow publishing if either text exists OR image exists
+  composeBtn.disabled = false;
+});
+
+composeImageRemove?.addEventListener('click', () => {
+  currentImageFile = null;
+  composeFile.value = '';
+  composeImagePreviewContainer?.classList.add('hidden');
+  if (composeImagePreview) {
+    URL.revokeObjectURL(composeImagePreview.src);
+    composeImagePreview.src = '';
+  }
+
+  // Re-evaluate button state
+  composeBtn.disabled = composeText.value.trim().length === 0;
+});
+
+import { createPost, uploadImage } from '../api/feed';
+
+composeBtn?.addEventListener('click', async () => {
+  if (!currentUser) return;
+  const content = composeText.value.trim();
+
+  // Need either content or image
+  if (content.length === 0 && !currentImageFile) return;
+
+  try {
+    // 1. Loading UI
+    composeBtn.disabled = true;
+    composeBtnText?.classList.add('opacity-0');
+    composeBtnSpinner?.classList.remove('hidden');
+    if (composeError) composeError.textContent = '';
+
+    // Disable inputs
+    composeText.disabled = true;
+    composeFile.disabled = true;
+
+    // 2. Upload Image if exists
+    let imageUrl = undefined;
+    if (currentImageFile) {
+      imageUrl = await uploadImage(currentImageFile);
+    }
+
+    // 3. Create Post
+    await createPost(content, currentUser.id, imageUrl);
+
+    // 4. Reset UI
+    composeText.value = '';
+    composeImageRemove?.click(); // Clears image and re-evaluates button
+    composeBtn.disabled = true; // Force disable since it's empty now
+
+    // 5. Refresh Feed
+    // We could prepend, but reloading ensures purity and proper sorting
+    if (feedContainer) {
+      Array.from(feedContainer.children).forEach(child => {
+        if (child.id !== 'loading-spinner') child.remove();
+      });
+      await loadFeed();
+    }
+
+  } catch (err: any) {
+    console.error('Post creation failed:', err);
+    if (composeError) composeError.textContent = 'Failed to broadcast signal. Try again.';
+  } finally {
+    // Restore UI
+    composeBtnText?.classList.remove('opacity-0');
+    composeBtnSpinner?.classList.add('hidden');
+    composeText.disabled = false;
+    composeFile.disabled = false;
+    // Keep button disabled if empty, otherwise re-enable
+    composeBtn.disabled = composeText.value.trim().length === 0 && !currentImageFile;
   }
 });
 
