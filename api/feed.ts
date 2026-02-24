@@ -15,10 +15,39 @@ export interface Post {
   createdAt: string;
 }
 
+function getDemoFeed(): Post[] {
+  return [
+    {
+      id: 'demo-001',
+      author: { username: 'admin_vyre' },
+      content: 'Welcome to the VYRE Beta. This is an early build showcasing the global feed experience. Security first, signal over noise.',
+      likes: 1337,
+      comments: 42,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'demo-002',
+      author: { username: 'security_bot' },
+      content: 'System notice: You are viewing demo data. Connect your Supabase credentials to see real posts.',
+      likes: 0,
+      comments: 1,
+      createdAt: new Date(Date.now() - 3600000).toISOString()
+    },
+    {
+      id: 'demo-003',
+      author: { username: 'early_adopter' },
+      content: 'The typography looks sharp. Waiting for the full backend hookup to test posting with media. This platform has potential.',
+      likes: 12,
+      comments: 3,
+      createdAt: new Date(Date.now() - 7200000).toISOString()
+    }
+  ];
+}
+
 export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
   if (!supabase) {
-    console.warn('VYRE: No Supabase client. Returning empty feed.');
-    return { data: [] };
+    console.warn('VYRE: No Supabase client. Returning demo feed.');
+    return { data: getDemoFeed() };
   }
   try {
     const { data, error } = await supabase
