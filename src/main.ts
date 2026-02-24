@@ -21,7 +21,9 @@ const btnSignup = document.getElementById('btn-signup');
 
 // Header Elements
 const userHandle = document.getElementById('user-handle');
-const betaPill = document.getElementById('beta-pill');
+const betaBar = document.getElementById('beta-bar');
+const betaRefreshBtn = document.getElementById('beta-refresh-btn');
+const betaSigninBtn = document.getElementById('beta-signin-btn');
 
 // Compose Elements
 const composeContainer = document.getElementById('compose-container');
@@ -89,7 +91,8 @@ function handleAuthChange(session: any) {
       userHandle.classList.remove('hidden');
       if (composeAvatarInitial) composeAvatarInitial.textContent = emailPrefix.charAt(0).toUpperCase();
     }
-    betaPill?.classList.add('hidden');
+    betaBar?.classList.add('hidden');
+    betaBar?.classList.remove('flex');
 
     // Enable Compose
     composeContainer?.classList.remove('hidden');
@@ -139,9 +142,25 @@ function showAuth() {
 betaAccessBtn?.addEventListener('click', () => {
   console.log('VYRE: Beta Access clicked');
   inBetaSession = true;
-  betaPill?.classList.remove('hidden');
+  betaBar?.classList.remove('hidden');
+  betaBar?.classList.add('flex');
   showApp();
   loadFeed();
+});
+
+// Handle Beta Bar Actions
+betaRefreshBtn?.addEventListener('click', () => {
+  if (feedContainer) {
+    Array.from(feedContainer.children).forEach(child => {
+      if (child.id !== 'loading-spinner') child.remove();
+    });
+    loadFeed();
+  }
+});
+
+betaSigninBtn?.addEventListener('click', () => {
+  inBetaSession = false;
+  showAuth();
 });
 
 // Handle Logout
@@ -307,6 +326,11 @@ async function loadFeed() {
     const response = await getGlobalFeed();
     loadingSpinner.classList.add('hidden');
 
+    if (response.data.length === 0) {
+      feedContainer.appendChild(createEmptyState());
+      return;
+    }
+
     response.data.forEach(post => {
       const postEl = createPostElement(post);
       feedContainer.appendChild(postEl);
@@ -320,6 +344,29 @@ async function loadFeed() {
     errorEl.textContent = 'Failed to load signal.';
     feedContainer.appendChild(errorEl);
   }
+}
+
+function createEmptyState(): HTMLElement {
+  const div = document.createElement('div');
+  div.className = 'flex flex-col items-center justify-center py-20 px-6 text-center';
+  div.innerHTML = `
+    <div class="w-16 h-16 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mb-4">
+      <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+    </div>
+    <h3 class="text-gray-300 font-semibold text-sm mb-1">No posts yet</h3>
+    <p class="text-gray-600 text-xs font-mono mb-4">Sign in to create the first post.</p>
+    <button id="empty-signin-btn" class="px-4 py-2 text-[11px] font-mono text-black bg-gray-100 rounded-sm hover:bg-white transition-colors font-semibold">Sign in</button>
+  `;
+
+  // Wire up the Sign In button inside the empty state
+  setTimeout(() => {
+    document.getElementById('empty-signin-btn')?.addEventListener('click', () => {
+      inBetaSession = false;
+      showAuth();
+    });
+  }, 0);
+
+  return div;
 }
 
 function createPostElement(post: Post): HTMLElement {
@@ -356,18 +403,21 @@ function createPostElement(post: Post): HTMLElement {
         
         <!-- Actions -->
         <div class="flex items-center gap-6 mt-4 text-gray-500">
-          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed group/tooltip' : 'hover:text-brand-orange'}" ${!currentUser ? 'disabled' : ''}>
+          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-brand-orange'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
             <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             <span class="text-xs font-mono">${post.comments}</span>
-            ${!currentUser ? '<span class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-900 border border-gray-800 text-gray-300 px-2 py-1 rounded-sm text-[10px] opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-10">Sign in to comment</span>' : ''}
           </button>
           
-          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed group/tooltip' : 'hover:text-brand-green'}" ${!currentUser ? 'disabled' : ''}>
+          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-brand-green'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
             <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
             <span class="text-xs font-mono">${post.likes}</span>
-            ${!currentUser ? '<span class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-900 border border-gray-800 text-gray-300 px-2 py-1 rounded-sm text-[10px] opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-10">Sign in to like</span>' : ''}
+          </button>
+
+          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-300'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
+            <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
           </button>
         </div>
+        ${!currentUser ? '<p class="text-[10px] text-gray-600 font-mono mt-2">Sign in to interact</p>' : ''}
       </div>
     </div>
   `;
