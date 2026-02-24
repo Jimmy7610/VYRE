@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { getGlobalFeed, Post } from '../api/feed';
 import { supabase } from './lib/supabase';
 import './styles.css';
@@ -41,7 +42,8 @@ let currentImageFile: File | null = null;
 
 // TEMP: Beta Access Flag Enforcement
 // MUST BE REMOVED BEFORE PRODUCTION LAUNCH
-if ((import.meta as any).env.VITE_BETA_MODE === 'true') {
+// @ts-ignore
+if (import.meta.env.VITE_BETA_MODE === 'true') {
   console.log('VYRE: Beta Mode Active');
   betaAccessContainer?.classList.remove('hidden');
 }
@@ -82,7 +84,8 @@ function handleAuthChange(session: any) {
     // Disable Compose
     composeContainer?.classList.add('hidden');
     composeContainer?.classList.remove('flex');
-    if (mainApp && !mainApp.classList.contains('hidden') && (import.meta as any).env.VITE_BETA_MODE !== 'true') {
+    // @ts-ignore
+    if (mainApp && !mainApp.classList.contains('hidden') && import.meta.env.VITE_BETA_MODE !== 'true') {
       showAuth();
     }
   }
