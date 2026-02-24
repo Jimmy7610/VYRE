@@ -3,83 +3,91 @@ import './styles.css';
 
 const authScreen = document.getElementById('auth-screen');
 const mainApp = document.getElementById('main-app');
+const betaAccessContainer = document.getElementById('beta-access-container');
 const betaAccessBtn = document.getElementById('beta-access-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const feedContainer = document.getElementById('feed-container');
 const loadingSpinner = document.getElementById('loading-spinner');
 
+// TEMP: Beta Access Flag Enforcement
+// MUST BE REMOVED BEFORE PRODUCTION LAUNCH
+if (import.meta.env.VITE_BETA_MODE === 'true') {
+  console.log('VYRE: Beta Mode Active');
+  betaAccessContainer?.classList.remove('hidden');
+}
+
 // Handle Beta Access Login
 betaAccessBtn?.addEventListener('click', async () => {
-    if (authScreen && mainApp) {
-        // Basic transition
-        authScreen.classList.add('opacity-0', 'transition-opacity', 'duration-500');
-        setTimeout(() => {
-            authScreen.classList.add('hidden');
-            mainApp.classList.remove('hidden');
-            mainApp.classList.add('flex');
-            loadFeed();
-        }, 500);
-    }
+  if (authScreen && mainApp) {
+    // Basic transition
+    authScreen.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+    setTimeout(() => {
+      authScreen.classList.add('hidden');
+      mainApp.classList.remove('hidden');
+      mainApp.classList.add('flex');
+      loadFeed();
+    }, 500);
+  }
 });
 
 // Handle Logout
 logoutBtn?.addEventListener('click', () => {
-    if (authScreen && mainApp) {
-        mainApp.classList.add('hidden');
-        mainApp.classList.remove('flex');
-        authScreen.classList.remove('hidden', 'opacity-0');
-        if (feedContainer) {
-            // Clear feed on logout
-            Array.from(feedContainer.children).forEach(child => {
-                if (child.id !== 'loading-spinner') {
-                    child.remove();
-                }
-            });
+  if (authScreen && mainApp) {
+    mainApp.classList.add('hidden');
+    mainApp.classList.remove('flex');
+    authScreen.classList.remove('hidden', 'opacity-0');
+    if (feedContainer) {
+      // Clear feed on logout
+      Array.from(feedContainer.children).forEach(child => {
+        if (child.id !== 'loading-spinner') {
+          child.remove();
         }
+      });
     }
+  }
 });
 
 // Render Feed
 async function loadFeed() {
-    if (!feedContainer || !loadingSpinner) return;
+  if (!feedContainer || !loadingSpinner) return;
 
-    loadingSpinner.classList.remove('hidden');
+  loadingSpinner.classList.remove('hidden');
 
-    try {
-        const response = await getGlobalFeed();
-        loadingSpinner.classList.add('hidden');
+  try {
+    const response = await getGlobalFeed();
+    loadingSpinner.classList.add('hidden');
 
-        response.data.forEach(post => {
-            const postEl = createPostElement(post);
-            feedContainer.appendChild(postEl);
-        });
+    response.data.forEach(post => {
+      const postEl = createPostElement(post);
+      feedContainer.appendChild(postEl);
+    });
 
-    } catch (error) {
-        console.error('Failed to load feed:', error);
-        loadingSpinner.classList.add('hidden');
-        const errorEl = document.createElement('div');
-        errorEl.className = 'p-4 text-center text-red-500 font-mono text-xs';
-        errorEl.textContent = 'Failed to load signal.';
-        feedContainer.appendChild(errorEl);
-    }
+  } catch (error) {
+    console.error('Failed to load feed:', error);
+    loadingSpinner.classList.add('hidden');
+    const errorEl = document.createElement('div');
+    errorEl.className = 'p-4 text-center text-red-500 font-mono text-xs';
+    errorEl.textContent = 'Failed to load signal.';
+    feedContainer.appendChild(errorEl);
+  }
 }
 
 function createPostElement(post: Post): HTMLElement {
-    const article = document.createElement('article');
-    article.className = 'w-full border-b border-gray-900 p-4 hover:bg-gray-900/20 transition-colors pt-5';
+  const article = document.createElement('article');
+  article.className = 'w-full border-b border-gray-900 p-4 hover:bg-gray-900/20 transition-colors pt-5';
 
-    const time = new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const time = new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    let imageHtml = '';
-    if (post.imageUrl) {
-        imageHtml = `
+  let imageHtml = '';
+  if (post.imageUrl) {
+    imageHtml = `
       <div class="mt-3 w-full rounded-sm overflow-hidden border border-gray-800 bg-gray-900 aspect-video relative">
         <img src="${post.imageUrl}" alt="Post media" class="w-full h-full object-cover opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-500 cursor-pointer" loading="lazy" />
       </div>
     `;
-    }
+  }
 
-    article.innerHTML = `
+  article.innerHTML = `
     <div class="flex gap-3">
       <!-- Avatar Placeholder -->
       <div class="w-10 h-10 rounded-sm bg-gray-800 flex-shrink-0 flex items-center justify-center border border-gray-700">
@@ -112,5 +120,5 @@ function createPostElement(post: Post): HTMLElement {
     </div>
   `;
 
-    return article;
+  return article;
 }
