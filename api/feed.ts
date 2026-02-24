@@ -16,6 +16,10 @@ export interface Post {
 }
 
 export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
+  if (!supabase) {
+    console.warn('VYRE: No Supabase client. Returning empty feed.');
+    return { data: [] };
+  }
   try {
     const { data, error } = await supabase
       .from('posts')
@@ -48,6 +52,7 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
 };
 
 export const createPost = async (content: string, authorId: string, imageUrl?: string): Promise<string> => {
+  if (!supabase) throw new Error('Supabase not configured');
   try {
     // 1. Insert Post
     const { data: postData, error: postError } = await supabase
@@ -85,6 +90,7 @@ export const createPost = async (content: string, authorId: string, imageUrl?: s
 };
 
 export const uploadImage = async (file: File): Promise<string> => {
+  if (!supabase) throw new Error('Supabase not configured');
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;

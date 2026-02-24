@@ -1,13 +1,19 @@
 /// <reference types="vite/client" />
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// @ts-ignore
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-// @ts-ignore
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('VYRE: Missing Supabase credentials. Feed operations will fail until VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
+let _supabase: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+    try {
+        _supabase = createClient(supabaseUrl, supabaseAnonKey);
+    } catch (err) {
+        console.warn('VYRE: Failed to create Supabase client:', err);
+    }
+} else {
+    console.warn('VYRE: Missing Supabase credentials. Auth and feed will run in offline/beta-only mode.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = _supabase;

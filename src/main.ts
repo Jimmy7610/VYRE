@@ -39,6 +39,7 @@ const composeAvatarInitial = document.getElementById('compose-avatar-initial');
 // Global Auth State
 let currentUser: any = null;
 let currentImageFile: File | null = null;
+let inBetaSession = false;
 
 // TEMP: Beta Access Flag Enforcement
 // Beta button is VISIBLE BY DEFAULT in HTML.
@@ -58,15 +59,24 @@ if (isBetaMode) {
   console.log('VYRE: Beta Mode Active');
 }
 
-// Check Initial Session
-supabase.auth.getSession().then(({ data: { session } }) => {
-  handleAuthChange(session);
-});
+// Only initialize Supabase Auth if credentials exist
+const hasSupabaseCredentials = Boolean(
+  import.meta.env?.VITE_SUPABASE_URL && import.meta.env?.VITE_SUPABASE_ANON_KEY
+);
 
-// Listen for Auth Changes
-supabase.auth.onAuthStateChange((_event, session) => {
-  handleAuthChange(session);
-});
+if (hasSupabaseCredentials && supabase) {
+  // Check Initial Session
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    handleAuthChange(session);
+  }).catch((err: any) => console.warn('VYRE: Session check failed:', err));
+
+  // Listen for Auth Changes
+  supabase.auth.onAuthStateChange((_event, session) => {
+    handleAuthChange(session);
+  });
+} else {
+  console.warn('VYRE: No Supabase credentials. Auth disabled. Beta mode available.');
+}
 
 function handleAuthChange(session: any) {
   currentUser = session?.user ?? null;
@@ -94,8 +104,8 @@ function handleAuthChange(session: any) {
     // Disable Compose
     composeContainer?.classList.add('hidden');
     composeContainer?.classList.remove('flex');
-    // @ts-ignore
-    if (mainApp && !mainApp.classList.contains('hidden') && !isBetaMode) {
+    // Only redirect to auth screen if NOT in beta session
+    if (mainApp && !mainApp.classList.contains('hidden') && !isBetaMode && !inBetaSession) {
       showAuth();
     }
   }
@@ -126,7 +136,9 @@ function showAuth() {
 }
 
 // Handle Beta Access Login
-betaAccessBtn?.addEventListener('click', async () => {
+betaAccessBtn?.addEventListener('click', () => {
+  console.log('VYRE: Beta Access clicked');
+  inBetaSession = true;
   betaPill?.classList.remove('hidden');
   showApp();
   loadFeed();
@@ -134,7 +146,7 @@ betaAccessBtn?.addEventListener('click', async () => {
 
 // Handle Logout
 logoutBtn?.addEventListener('click', async () => {
-  await supabase.auth.signOut();
+  if (supabase) await supabase.auth.signOut();
   showAuth();
 });
 
@@ -144,7 +156,7 @@ authForm?.addEventListener('submit', async (e) => {
   if (authErrorMsg) authErrorMsg.textContent = '';
 
   if (e.submitter?.id === 'btn-login') {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase!.auth.signInWithPassword({
       email: authEmail.value,
       password: authPassword.value,
     });
@@ -163,7 +175,7 @@ btnSignup?.addEventListener('click', async () => {
   }
   if (authErrorMsg) authErrorMsg.textContent = '';
 
-  const { error } = await supabase.auth.signUp({
+  const { error } = await supabase!.auth.signUp({
     email: authEmail.value,
     password: authPassword.value,
   });
