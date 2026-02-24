@@ -24,14 +24,33 @@
       </div>
 
       <div class="w-full max-w-xs space-y-4 animate-fade-in-up delay-100">
-        <button disabled
-          class="w-full py-3.5 px-4 bg-gray-900 text-gray-400 font-medium rounded-sm border border-gray-800 opacity-50 cursor-not-allowed transition-all">
-          Join the Waitlist
-        </button>
+        <!-- Main Auth Form -->
+        <form id="auth-form" class="space-y-3">
+          <input type="email" id="auth-email" placeholder="Email" required
+            class="w-full py-3.5 px-4 bg-gray-900 text-gray-100 font-mono text-sm rounded-sm border border-gray-800 focus:border-brand-orange focus:outline-none transition-colors placeholder:text-gray-600" />
+          <input type="password" id="auth-password" placeholder="Password" required
+            class="w-full py-3.5 px-4 bg-gray-900 text-gray-100 font-mono text-sm rounded-sm border border-gray-800 focus:border-brand-orange focus:outline-none transition-colors placeholder:text-gray-600" />
+
+          <div id="auth-error-msg" class="text-xs text-red-500 font-mono min-h-[16px]"></div>
+
+          <div class="flex gap-2">
+            <button type="submit" id="btn-login"
+              class="flex-1 py-3.5 bg-gray-100 text-black font-semibold rounded-sm hover:bg-white transition-colors">
+              Sign In
+            </button>
+            <button type="button" id="btn-signup"
+              class="flex-1 py-3.5 bg-gray-900 text-gray-300 font-semibold rounded-sm border border-gray-800 hover:text-white transition-colors">
+              Sign Up
+            </button>
+          </div>
+        </form>
 
         <div class="relative py-4">
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-gray-900"></div>
+          </div>
+          <div class="relative flex justify-center text-[10px] font-mono uppercase tracking-widest text-gray-600">
+            <span class="bg-black px-2">OR</span>
           </div>
         </div>
 
@@ -59,9 +78,10 @@
         class="h-14 flex items-center justify-between px-4 border-b border-gray-900 bg-black/80 backdrop-blur-md sticky top-0 z-40">
         <h2 class="text-lg font-bold tracking-tight text-white">VYRE</h2>
         <div class="flex items-center gap-3">
-          <span
-            class="text-[10px] font-mono text-brand-orange px-2 py-0.5 border border-brand-orange/30 rounded-full bg-brand-orange/5">READ-ONLY
+          <span id="beta-pill"
+            class="text-[10px] font-mono text-brand-orange px-2 py-0.5 border border-brand-orange/30 rounded-full bg-brand-orange/5 hidden">READ-ONLY
             BETA</span>
+          <span id="user-handle" class="text-sm font-semibold text-gray-200 truncate max-w-[120px] hidden"></span>
           <button id="logout-btn"
             class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors">
             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
