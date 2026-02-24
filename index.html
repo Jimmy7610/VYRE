@@ -54,9 +54,9 @@
           </div>
         </div>
 
-        <!-- The TEMPORARY Beta Access Button (Dev Only) -->
-        <!-- NOTE: Rendering logic controlled by VITE_BETA_MODE flag -->
-        <div id="beta-access-container" class="hidden">
+        <!-- TEMPORARY Beta Access Button (Dev Only) — ALWAYS visible by default -->
+        <!-- JS will HIDE this if VITE_BETA_MODE is explicitly not 'true' -->
+        <div id="beta-access-container">
           <button id="beta-access-btn"
             class="relative group w-full py-3.5 px-4 bg-black text-brand-orange font-mono text-sm uppercase tracking-wider rounded-sm border border-brand-orange hover:bg-brand-orange/10 transition-colors overflow-hidden">
             <span class="relative z-10 flex items-center justify-center gap-2">

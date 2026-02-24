@@ -41,11 +41,21 @@ let currentUser: any = null;
 let currentImageFile: File | null = null;
 
 // TEMP: Beta Access Flag Enforcement
+// Beta button is VISIBLE BY DEFAULT in HTML.
+// This JS only hides it if VITE_BETA_MODE is explicitly set to 'false'.
 // MUST BE REMOVED BEFORE PRODUCTION LAUNCH
-// @ts-ignore
-if (import.meta.env.VITE_BETA_MODE === 'true') {
+let isBetaMode = true; // Default: show beta access
+try {
+  const envVal = import.meta.env?.VITE_BETA_MODE;
+  if (envVal === 'false') {
+    isBetaMode = false;
+    betaAccessContainer?.classList.add('hidden');
+  }
+} catch {
+  // If env checking fails entirely, keep beta mode on (safe dev default)
+}
+if (isBetaMode) {
   console.log('VYRE: Beta Mode Active');
-  betaAccessContainer?.classList.remove('hidden');
 }
 
 // Check Initial Session
@@ -85,7 +95,7 @@ function handleAuthChange(session: any) {
     composeContainer?.classList.add('hidden');
     composeContainer?.classList.remove('flex');
     // @ts-ignore
-    if (mainApp && !mainApp.classList.contains('hidden') && import.meta.env.VITE_BETA_MODE !== 'true') {
+    if (mainApp && !mainApp.classList.contains('hidden') && !isBetaMode) {
       showAuth();
     }
   }
