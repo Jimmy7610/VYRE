@@ -9,13 +9,15 @@
    ============================================================ */
 
 :root {
-  /* Core Palette */
-  --vyre-bg: #080c15;
-  --vyre-surface: #0f1623;
-  --vyre-card: #141c2b;
-  --vyre-card-hover: #1a2438;
-  --vyre-border: #1c2537;
-  --vyre-border-light: #263045;
+  /* Core Palette — Cinematic depth */
+  --vyre-bg: #0b1220;
+  --vyre-bg-deep: #070d18;
+  --vyre-surface: #101929;
+  --vyre-card: #151f32;
+  --vyre-card-hover: #1a2640;
+  --vyre-border: rgba(255, 255, 255, 0.06);
+  --vyre-border-light: rgba(255, 255, 255, 0.09);
+  --vyre-glow: rgba(56, 127, 244, 0.08);
 
   /* Text */
   --vyre-text: #e2e8f0;
@@ -70,7 +72,11 @@
 
 @layer base {
   body {
-    background-color: var(--vyre-bg);
+    background-color: var(--vyre-bg-deep);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(18, 35, 58, 0.55) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(12, 25, 45, 0.35) 0%, transparent 65%),
+      radial-gradient(circle at 50% 40%, rgba(56, 127, 244, 0.04) 0%, transparent 50%);
     color: var(--vyre-text);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -101,7 +107,9 @@
    AUTH SCREEN
    ============================================================ */
 #auth-screen {
-  background: linear-gradient(170deg, #0a1020 0%, var(--vyre-bg) 50%, #060a12 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(20, 40, 70, 0.4) 0%, transparent 70%),
+    linear-gradient(170deg, #0c1628 0%, var(--vyre-bg) 45%, var(--vyre-bg-deep) 100%);
 }
 
 #auth-screen input {
@@ -135,10 +143,11 @@
    HEADER & NAV
    ============================================================ */
 .vyre-header {
-  background: linear-gradient(180deg, rgba(15, 22, 35, 0.95) 0%, rgba(8, 12, 21, 0.92) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.92) 0%, rgba(11, 18, 32, 0.88) 100%);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border-bottom: 1px solid var(--vyre-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .vyre-header-main {
@@ -224,6 +233,7 @@
 .vyre-tab.active {
   color: var(--vyre-primary-hover);
   border-bottom-color: var(--vyre-primary);
+  text-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
 }
 
 .vyre-tab:hover:not(.active) {
@@ -386,7 +396,8 @@
   background: var(--vyre-surface);
   border: 1px solid var(--vyre-border);
   border-radius: var(--r-md);
-  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
+  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .vyre-post:first-of-type {
@@ -396,7 +407,7 @@
 .vyre-post:hover {
   background: var(--vyre-card);
   border-color: var(--vyre-border-light);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .vyre-post-inner {
@@ -530,10 +541,11 @@
   bottom: 0;
   width: 100%;
   height: 60px;
-  background: linear-gradient(180deg, rgba(15, 22, 35, 0.95) 0%, rgba(8, 12, 21, 0.98) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.88) 0%, rgba(7, 13, 24, 0.95) 100%);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
   border-top: 1px solid var(--vyre-border);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.02), 0 -4px 16px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-around;
