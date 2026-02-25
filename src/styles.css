@@ -528,6 +528,10 @@
   color: var(--vyre-heart);
 }
 
+.vyre-action-btn.liked .vyre-icon-heart {
+  color: var(--vyre-heart);
+}
+
 .vyre-action-btn:not(:disabled):hover .vyre-icon-comment {
   color: var(--vyre-comment);
 }

@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus } from '../api/feed';
+import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike } from '../api/feed';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -328,6 +328,16 @@ async function loadFeed() {
 
   try {
     const response = await getGlobalFeed();
+
+    // Fetch user likes if logged in
+    if (currentUser) {
+      const postIds = response.data.map(p => p.id);
+      const likedPostIds = await fetchUserLikes(postIds, currentUser.id);
+      response.data.forEach(p => {
+        p.likedByMe = likedPostIds.has(p.id);
+      });
+    }
+
     loadingSpinner.classList.add('hidden');
 
     if (response.data.length === 0) {
@@ -411,6 +421,8 @@ function createPostElement(post: Post): HTMLElement {
     `;
   }
 
+  const isLikeDisabled = !currentUser && !inBetaSession;
+
   article.innerHTML = `
     <div class="vyre-post-inner">
       <div class="vyre-post-avatar">${initial}</div>
@@ -422,9 +434,9 @@ function createPostElement(post: Post): HTMLElement {
         <p class="vyre-post-content">${post.content}</p>
         ${imageHtml}
         <div class="vyre-post-actions">
-          <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
-            <svg class="vyre-icon-heart" fill="${currentUser ? 'none' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            <span class="vyre-action-count">${post.likes}</span>
+          <button class="vyre-action-btn like-btn ${post.likedByMe ? 'liked' : ''}" ${isLikeDisabled ? 'disabled title="Sign in to interact"' : ''}>
+            <svg class="vyre-icon-heart" fill="${post.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span class="vyre-action-count like-count">${post.likes}</span>
           </button>
           <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
             <svg class="vyre-icon-comment" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -438,6 +450,53 @@ function createPostElement(post: Post): HTMLElement {
       </div>
     </div>
   `;
+
+  // Like Button Logic
+  const likeBtn = article.querySelector('.like-btn') as HTMLButtonElement;
+  const likeCountSpan = article.querySelector('.like-count') as HTMLSpanElement;
+  const heartIcon = article.querySelector('.vyre-icon-heart') as SVGElement;
+
+  if (likeBtn) {
+    let isPending = false;
+    likeBtn.addEventListener('click', async () => {
+      if (inBetaSession && !currentUser) {
+        showToast('Read-only beta: Likes are disabled');
+        return;
+      }
+      if (!currentUser) return;
+      if (isPending) return;
+
+      isPending = true;
+      likeBtn.style.opacity = '0.5';
+
+      // Optimistic UI update
+      const wasLiked = post.likedByMe;
+      post.likedByMe = !wasLiked;
+      post.likes += post.likedByMe ? 1 : -1;
+
+      likeBtn.classList.toggle('liked', post.likedByMe);
+      heartIcon.setAttribute('fill', post.likedByMe ? 'currentColor' : 'none');
+      likeCountSpan.textContent = post.likes.toString();
+
+      try {
+        const result = await toggleLike(post.id, currentUser.id, wasLiked);
+        // Ensure count is in sync with server truth
+        post.likes = result.count;
+        likeCountSpan.textContent = result.count.toString();
+      } catch (err: any) {
+        // Revert UI on failure
+        post.likedByMe = wasLiked;
+        post.likes += post.likedByMe ? 1 : -1;
+        likeBtn.classList.toggle('liked', post.likedByMe);
+        heartIcon.setAttribute('fill', post.likedByMe ? 'currentColor' : 'none');
+        likeCountSpan.textContent = post.likes.toString();
+        showToast(err.userMessage || 'Failed to toggle like');
+      } finally {
+        isPending = false;
+        likeBtn.style.opacity = '1';
+      }
+    });
+  }
 
   return article;
 }
@@ -483,3 +542,22 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+// === UTILS ===
+function showToast(message: string) {
+  const toast = document.createElement('div');
+  toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-[var(--vyre-card)] text-white px-5 py-3 rounded-full text-sm font-medium z-50 transition-all duration-300 ease-in-out opacity-0 translate-y-4 pointer-events-none shadow-lg border border-[var(--vyre-border-light)]';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // Fade in
+  requestAnimationFrame(() => {
+    toast.classList.remove('opacity-0', 'translate-y-4');
+  });
+
+  // Fade out and remove
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
