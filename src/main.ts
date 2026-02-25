@@ -106,8 +106,13 @@ function handleAuthChange(session: any) {
       userHandle.classList.add('hidden');
       userHandleIcon?.classList.remove('hidden');
     }
-    // Disable Compose
-    composeContainer?.classList.add('hidden');
+    // Compose container state
+    if (inBetaSession) {
+      composeContainer?.classList.remove('hidden');
+    } else {
+      composeContainer?.classList.add('hidden');
+    }
+
     // Only redirect to auth screen if NOT in beta session
     if (mainApp && !mainApp.classList.contains('hidden') && !isBetaMode && !inBetaSession) {
       showAuth();
@@ -210,9 +215,24 @@ btnSignup?.addEventListener('click', async () => {
 });
 
 // Compose Logic
+composeText?.addEventListener('focus', () => {
+  if (inBetaSession && !currentUser) {
+    composeText.blur();
+    showToast('Read-only beta: Posting is disabled');
+  }
+});
+
 composeText?.addEventListener('input', () => {
+  if (inBetaSession && !currentUser) return;
   if (composeError) composeError.textContent = '';
   composeBtn.disabled = composeText.value.trim().length === 0;
+});
+
+composeFile?.addEventListener('click', (e) => {
+  if (inBetaSession && !currentUser) {
+    e.preventDefault();
+    showToast('Read-only beta: Image upload is disabled');
+  }
 });
 
 composeFile?.addEventListener('change', (e) => {
@@ -655,6 +675,43 @@ function renderCommentItem(comment: Comment): string {
     </div>
   `;
 }
+
+// === SEARCH MVP ===
+const searchToggleBtn = document.getElementById('search-toggle-btn');
+const searchInput = document.getElementById('search-input') as HTMLInputElement;
+
+searchToggleBtn?.addEventListener('click', () => {
+  if (searchInput.classList.contains('w-0')) {
+    searchInput.classList.remove('w-0', 'opacity-0', 'pointer-events-none');
+    searchInput.classList.add('w-48', 'sm:w-64', 'opacity-100', 'pointer-events-auto');
+    searchInput.focus();
+  } else {
+    searchInput.classList.add('w-0', 'opacity-0', 'pointer-events-none');
+    searchInput.classList.remove('w-48', 'sm:w-64', 'opacity-100', 'pointer-events-auto');
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input')); // clear filter
+  }
+});
+
+searchInput?.addEventListener('input', (e) => {
+  const term = (e.target as HTMLInputElement).value.toLowerCase();
+  if (!feedContainer) return;
+
+  Array.from(feedContainer.children).forEach(child => {
+    if (child.id === 'loading-spinner') return;
+
+    if (child.classList.contains('vyre-post')) {
+      const username = child.querySelector('.vyre-post-username')?.textContent?.toLowerCase() || '';
+      const content = child.querySelector('.vyre-post-content')?.textContent?.toLowerCase() || '';
+
+      if (username.includes(term) || content.includes(term)) {
+        (child as HTMLElement).style.display = '';
+      } else {
+        (child as HTMLElement).style.display = 'none';
+      }
+    }
+  });
+});
 
 // === DEBUG PANEL ===
 const debugPanel = document.getElementById('debug-panel');

@@ -77,11 +77,15 @@
       <header class="vyre-header sticky top-0 z-40">
         <div class="vyre-header-main">
           <!-- Left: Search -->
-          <div class="vyre-header-icon" title="Search (Coming soon)">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+          <div class="relative flex items-center h-full">
+            <div id="search-toggle-btn" class="vyre-header-icon cursor-pointer z-10 relative" title="Search">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input type="text" id="search-input" placeholder="Search posts..."
+              class="absolute left-8 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-full px-4 py-1.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] transition-all duration-300 w-0 opacity-0 pointer-events-none z-20 shadow-lg">
           </div>
 
           <!-- Center: Logo -->
