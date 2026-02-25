@@ -31,7 +31,7 @@
           <input type="email" id="auth-email" placeholder="Email" required class="w-full" />
           <input type="password" id="auth-password" placeholder="Password" required class="w-full" />
 
-          <div id="auth-error-msg" class="text-xs font-mono min-h-[16px]" style="color:var(--c-heart);"></div>
+          <div id="auth-error-msg" class="text-xs font-mono min-h-[16px]" style="color:var(--vyre-danger);"></div>
 
           <div class="flex gap-2">
             <button type="submit" id="btn-login" class="flex-1 py-3.5 font-semibold rounded-md transition-colors"
@@ -141,7 +141,7 @@
 
             <!-- Image Preview -->
             <div id="compose-image-preview-container" class="hidden relative mt-2 w-full overflow-hidden"
-              style="border-radius:var(--r-md); border:1px solid var(--c-border);">
+              style="border-radius:var(--r-md); border:1px solid var(--vyre-border);">
               <img id="compose-image-preview" src="" alt="Preview" class="w-full object-cover"
                 style="aspect-ratio:16/9;">
               <button id="compose-image-remove"
@@ -165,7 +165,7 @@
               </svg>
             </label>
             <input type="file" id="compose-file" accept="image/png, image/jpeg, image/webp" class="hidden">
-            <span id="compose-error" class="text-xs font-mono" style="color:var(--c-heart);"></span>
+            <span id="compose-error" class="text-xs font-mono" style="color:var(--vyre-danger);"></span>
           </div>
 
           <button id="compose-btn" disabled class="vyre-btn-post">
@@ -187,7 +187,7 @@
         </div>
       </main>
 
-      <!-- Bottom Navigation -->
+      <!-- Bottom Navigation (4 items) -->
       <nav class="vyre-bottom-nav">
         <div class="vyre-nav-item active">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,11 +199,6 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-        <div class="vyre-nav-create disabled" title="Sign in to post">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
           </svg>
         </div>
         <div class="vyre-nav-item">
@@ -220,9 +215,16 @@
         </div>
       </nav>
 
+      <!-- Floating Action Button -->
+      <button id="fab-create" class="vyre-fab disabled" title="Sign in to post">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+
       <!-- Debug Panel (Dev Only) -->
       <div id="debug-panel" class="hidden absolute inset-0 z-50 overflow-y-auto p-6"
-        style="background:rgba(10,14,23,0.95); backdrop-filter:blur(16px);">
+        style="background:rgba(8,12,21,0.96); backdrop-filter:blur(20px);">
         <div class="max-w-[600px] mx-auto">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-sm font-bold text-white font-mono tracking-wider">/debug</h3>

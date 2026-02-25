@@ -4,25 +4,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== DESIGN TOKENS ===== */
+/* ============================================================
+   VYRE Design System v2 — Dark Feed Layout
+   ============================================================ */
+
 :root {
-  /* Colors */
-  --c-bg: #0a0e17;
-  --c-bg-card: #111827;
-  --c-bg-surface: #1a2234;
-  --c-bg-hover: #1e293b;
-  --c-border: #1e293b;
-  --c-border-light: #2a3548;
-  --c-text: #e2e8f0;
-  --c-text-secondary: #94a3b8;
-  --c-text-muted: #64748b;
-  --c-brand: #3b82f6;
-  --c-brand-light: #60a5fa;
-  --c-accent: #FF4A00;
-  --c-heart: #ef4444;
-  --c-comment: #fbbf24;
-  --c-share: #3b82f6;
-  --c-success: #22c55e;
+  /* Core Palette */
+  --vyre-bg: #080c15;
+  --vyre-surface: #0f1623;
+  --vyre-card: #141c2b;
+  --vyre-card-hover: #1a2438;
+  --vyre-border: #1c2537;
+  --vyre-border-light: #263045;
+
+  /* Text */
+  --vyre-text: #e2e8f0;
+  --vyre-text-secondary: #94a3b8;
+  --vyre-muted: #576378;
+
+  /* Brand / Accent */
+  --vyre-primary: #3b82f6;
+  --vyre-primary-hover: #60a5fa;
+  --vyre-accent: #FF4A00;
+
+  /* Semantic */
+  --vyre-heart: #f43f5e;
+  --vyre-comment: #f59e0b;
+  --vyre-share: #3b82f6;
+  --vyre-success: #22c55e;
+  --vyre-danger: #ef4444;
 
   /* Spacing */
   --sp-xs: 4px;
@@ -33,24 +43,29 @@
   --sp-2xl: 24px;
 
   /* Radius */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 14px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
   --r-full: 9999px;
 
-  /* Typography */
+  /* Font sizes */
+  --fs-2xs: 10px;
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 14px;
   --fs-md: 15px;
   --fs-lg: 18px;
   --fs-xl: 22px;
+
+  /* Transitions */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration: 200ms;
 }
 
 @layer base {
   body {
-    background-color: var(--c-bg);
-    color: var(--c-text);
+    background-color: var(--vyre-bg);
+    color: var(--vyre-text);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -71,46 +86,53 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--c-border);
+    background: var(--vyre-border);
     border-radius: var(--r-full);
   }
 }
 
-/* ===== AUTH SCREEN ===== */
+/* ============================================================
+   AUTH SCREEN
+   ============================================================ */
 #auth-screen {
-  background: linear-gradient(180deg, var(--c-bg) 0%, #070b14 100%);
+  background: linear-gradient(170deg, #0a1020 0%, var(--vyre-bg) 50%, #060a12 100%);
 }
 
 #auth-screen input {
-  background: var(--c-bg-card);
-  border: 1px solid var(--c-border);
+  background: var(--vyre-surface);
+  border: 1px solid var(--vyre-border);
   border-radius: var(--r-sm);
   padding: 14px 16px;
   font-size: var(--fs-base);
-  color: var(--c-text);
-  transition: border-color 0.2s;
+  color: var(--vyre-text);
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
 
 #auth-screen input::placeholder {
-  color: var(--c-text-muted);
+  color: var(--vyre-muted);
 }
 
 #auth-screen input:focus {
-  border-color: var(--c-brand);
+  border-color: var(--vyre-primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-/* ===== MAIN APP SHELL ===== */
+/* ============================================================
+   MAIN APP SHELL
+   ============================================================ */
 #main-app {
-  background: var(--c-bg);
+  background: var(--vyre-bg);
 }
 
-/* ===== HEADER ===== */
+/* ============================================================
+   HEADER & NAV
+   ============================================================ */
 .vyre-header {
-  background: rgba(10, 14, 23, 0.85);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--c-border);
+  background: linear-gradient(180deg, rgba(15, 22, 35, 0.95) 0%, rgba(8, 12, 21, 0.92) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--vyre-border);
 }
 
 .vyre-header-main {
@@ -141,36 +163,43 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--c-text-secondary);
-  transition: all 0.2s;
+  color: var(--vyre-text-secondary);
+  transition: all var(--duration) var(--ease);
   cursor: pointer;
 }
 
 .vyre-header-icon:hover {
   color: white;
-  background: var(--c-bg-hover);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .vyre-avatar-sm {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-full);
-  background: var(--c-bg-surface);
-  border: 2px solid var(--c-border-light);
+  background: linear-gradient(135deg, var(--vyre-surface), var(--vyre-card));
+  border: 2px solid var(--vyre-border-light);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--c-text-secondary);
+  font-weight: 700;
+  color: var(--vyre-text-secondary);
   overflow: hidden;
+  transition: border-color var(--duration) var(--ease);
 }
 
-/* ===== TAB BAR ===== */
+.vyre-avatar-sm:hover {
+  border-color: var(--vyre-primary);
+}
+
+/* ============================================================
+   TAB BAR
+   ============================================================ */
 .vyre-tabs {
   display: flex;
-  border-bottom: 1px solid var(--c-border);
-  padding: 0 var(--sp-lg);
+  border-bottom: 1px solid var(--vyre-border);
+  padding: 0;
 }
 
 .vyre-tab {
@@ -179,40 +208,45 @@
   padding: var(--sp-md) 0;
   font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--c-text-muted);
+  color: var(--vyre-muted);
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration) var(--ease);
+  position: relative;
 }
 
 .vyre-tab.active {
-  color: var(--c-brand-light);
-  border-bottom-color: var(--c-brand);
+  color: var(--vyre-primary-hover);
+  border-bottom-color: var(--vyre-primary);
 }
 
 .vyre-tab:hover:not(.active) {
-  color: var(--c-text-secondary);
+  color: var(--vyre-text-secondary);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-/* ===== BETA BAR ===== */
+/* ============================================================
+   BETA BAR
+   ============================================================ */
 .vyre-beta-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-sm) var(--sp-lg);
-  border-bottom: 1px solid var(--c-border);
-  background: rgba(59, 130, 246, 0.04);
+  border-bottom: 1px solid var(--vyre-border);
+  background: rgba(59, 130, 246, 0.03);
 }
 
 .vyre-beta-badge {
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--c-brand-light);
-  padding: 2px 10px;
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  color: var(--vyre-primary-hover);
+  padding: 3px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: var(--r-full);
-  background: rgba(59, 130, 246, 0.08);
-  letter-spacing: 0.05em;
+  background: rgba(59, 130, 246, 0.06);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .vyre-beta-actions {
@@ -222,46 +256,50 @@
 }
 
 .vyre-btn-ghost {
-  padding: 4px 12px;
+  padding: 5px 14px;
   font-size: var(--fs-xs);
   font-weight: 500;
-  color: var(--c-text-muted);
-  border: 1px solid var(--c-border);
+  color: var(--vyre-muted);
+  border: 1px solid var(--vyre-border);
   border-radius: var(--r-sm);
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration) var(--ease);
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .vyre-btn-ghost:hover {
-  color: white;
-  border-color: var(--c-border-light);
+  color: var(--vyre-text);
+  border-color: var(--vyre-border-light);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .vyre-btn-primary-sm {
-  padding: 4px 14px;
+  padding: 5px 16px;
   font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--c-bg);
+  font-weight: 700;
+  color: var(--vyre-bg);
   background: white;
   border: none;
   border-radius: var(--r-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration) var(--ease);
 }
 
 .vyre-btn-primary-sm:hover {
   background: #e2e8f0;
+  transform: translateY(-1px);
 }
 
-/* ===== COMPOSER ===== */
+/* ============================================================
+   COMPOSER
+   ============================================================ */
 .vyre-composer {
   padding: var(--sp-lg);
-  border-bottom: 1px solid var(--c-border);
-  background: var(--c-bg);
+  border-bottom: 1px solid var(--vyre-border);
+  background: var(--vyre-surface);
 }
 
 .vyre-composer-inner {
@@ -273,21 +311,20 @@
   width: 42px;
   height: 42px;
   border-radius: var(--r-full);
-  background: linear-gradient(135deg, var(--c-bg-surface), var(--c-bg-card));
-  border: 2px solid var(--c-border);
+  background: linear-gradient(135deg, var(--vyre-card), var(--vyre-border));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--c-text-muted);
+  font-weight: 700;
+  color: var(--vyre-muted);
   flex-shrink: 0;
 }
 
 .vyre-composer textarea {
   width: 100%;
   background: transparent;
-  color: var(--c-text);
+  color: var(--vyre-text);
   font-size: var(--fs-md);
   line-height: 1.5;
   resize: none;
@@ -297,7 +334,7 @@
 }
 
 .vyre-composer textarea::placeholder {
-  color: var(--c-text-muted);
+  color: var(--vyre-muted);
 }
 
 .vyre-composer-actions {
@@ -306,43 +343,52 @@
   justify-content: space-between;
   margin-top: var(--sp-md);
   padding-left: 54px;
-  /* avatar width + gap */
 }
 
 .vyre-btn-post {
-  padding: 8px 24px;
+  padding: 8px 28px;
   font-size: var(--fs-sm);
   font-weight: 700;
   color: white;
-  background: var(--c-brand);
+  background: var(--vyre-primary);
   border: none;
   border-radius: var(--r-full);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration) var(--ease);
   position: relative;
   overflow: hidden;
 }
 
 .vyre-btn-post:hover:not(:disabled) {
-  background: var(--c-brand-light);
+  background: var(--vyre-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
 }
 
 .vyre-btn-post:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* ===== POST CARDS ===== */
+/* ============================================================
+   POST CARDS — Soft surface containers
+   ============================================================ */
 .vyre-post {
+  margin: var(--sp-sm) var(--sp-md);
   padding: var(--sp-lg);
-  border-bottom: 1px solid var(--c-border);
-  transition: background 0.15s;
+  background: var(--vyre-surface);
+  border: 1px solid var(--vyre-border);
+  border-radius: var(--r-md);
+  transition: all var(--duration) var(--ease);
+}
+
+.vyre-post:first-of-type {
+  margin-top: var(--sp-md);
 }
 
 .vyre-post:hover {
-  background: rgba(30, 41, 59, 0.3);
+  background: var(--vyre-card);
+  border-color: var(--vyre-border-light);
 }
 
 .vyre-post-inner {
@@ -354,21 +400,21 @@
   width: 42px;
   height: 42px;
   border-radius: var(--r-full);
-  background: linear-gradient(135deg, var(--c-bg-surface), #2a3548);
+  background: linear-gradient(135deg, #1e293b, #334155);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--fs-sm);
   font-weight: 700;
-  color: var(--c-text-secondary);
+  color: var(--vyre-text-secondary);
 }
 
 .vyre-post-header {
   display: flex;
   align-items: baseline;
   gap: var(--sp-sm);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .vyre-post-username {
@@ -379,24 +425,24 @@
 
 .vyre-post-time {
   font-size: var(--fs-xs);
-  color: var(--c-text-muted);
+  color: var(--vyre-muted);
   margin-left: auto;
 }
 
 .vyre-post-content {
   font-size: var(--fs-md);
   line-height: 1.55;
-  color: var(--c-text);
+  color: var(--vyre-text);
   white-space: pre-wrap;
   word-break: break-word;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .vyre-post-image {
   margin-top: var(--sp-md);
   border-radius: var(--r-md);
   overflow: hidden;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--vyre-border);
 }
 
 .vyre-post-image img {
@@ -404,11 +450,13 @@
   display: block;
 }
 
-/* ===== POST ACTIONS ===== */
+/* ============================================================
+   POST ACTIONS
+   ============================================================ */
 .vyre-post-actions {
   display: flex;
   align-items: center;
-  gap: var(--sp-xl);
+  gap: var(--sp-2xl);
   margin-top: var(--sp-md);
   padding-top: var(--sp-sm);
 }
@@ -418,33 +466,32 @@
   align-items: center;
   gap: 6px;
   font-size: var(--fs-sm);
-  color: var(--c-text-muted);
-  transition: all 0.2s;
+  color: var(--vyre-muted);
+  transition: all var(--duration) var(--ease);
   cursor: pointer;
   background: none;
   border: none;
-  padding: 4px 0;
-  position: relative;
+  padding: 4px 2px;
 }
 
 .vyre-action-btn:not(:disabled):hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .vyre-action-btn:not(:disabled):hover .vyre-icon-heart {
-  color: var(--c-heart);
+  color: var(--vyre-heart);
 }
 
 .vyre-action-btn:not(:disabled):hover .vyre-icon-comment {
-  color: var(--c-comment);
+  color: var(--vyre-comment);
 }
 
 .vyre-action-btn:not(:disabled):hover .vyre-icon-share {
-  color: var(--c-share);
+  color: var(--vyre-share);
 }
 
 .vyre-action-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -456,47 +503,51 @@
 .vyre-action-count {
   font-weight: 600;
   font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 .vyre-sign-in-hint {
-  font-size: 10px;
-  color: var(--c-text-muted);
-  margin-top: 6px;
+  font-size: var(--fs-2xs);
+  color: var(--vyre-muted);
+  margin-top: 8px;
 }
 
-/* ===== BOTTOM NAV ===== */
+/* ============================================================
+   BOTTOM NAV (4 items only, no center +)
+   ============================================================ */
 .vyre-bottom-nav {
   position: absolute;
   bottom: 0;
   width: 100%;
-  height: 64px;
-  background: rgba(10, 14, 23, 0.92);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--c-border);
+  height: 60px;
+  background: linear-gradient(180deg, rgba(15, 22, 35, 0.95) 0%, rgba(8, 12, 21, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--vyre-border);
   display: flex;
   align-items: center;
   justify-content: space-around;
+  padding: 0 var(--sp-xl);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 40;
 }
 
 .vyre-nav-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--c-text-muted);
+  color: var(--vyre-muted);
   cursor: pointer;
-  transition: color 0.2s;
-  padding: 8px 12px;
+  transition: color var(--duration) var(--ease);
+  padding: 10px 14px;
 }
 
 .vyre-nav-item:hover {
-  color: var(--c-text-secondary);
+  color: var(--vyre-text-secondary);
 }
 
 .vyre-nav-item.active {
-  color: var(--c-brand-light);
+  color: var(--vyre-primary-hover);
 }
 
 .vyre-nav-item svg {
@@ -504,43 +555,61 @@
   height: 22px;
 }
 
-.vyre-nav-create {
-  width: 44px;
-  height: 44px;
+/* ============================================================
+   FLOATING ACTION BUTTON
+   ============================================================ */
+.vyre-fab {
+  position: fixed;
+  bottom: 76px;
+  /* above bottom nav */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 52px;
   border-radius: var(--r-full);
-  background: white;
-  color: var(--c-bg);
+  background: var(--vyre-primary);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: -12px;
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+  z-index: 45;
+  border: none;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1);
+  transition: all var(--duration) var(--ease);
 }
 
-.vyre-nav-create:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
+.vyre-fab:hover {
+  transform: translateX(-50%) scale(1.08) translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.45), 0 0 60px rgba(59, 130, 246, 0.15);
+  background: var(--vyre-primary-hover);
 }
 
-.vyre-nav-create.disabled {
-  opacity: 0.35;
+.vyre-fab:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.vyre-fab.disabled {
+  opacity: 0.3;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.vyre-nav-create.disabled:hover {
-  transform: none;
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+.vyre-fab.disabled:hover {
+  transform: translateX(-50%);
+  box-shadow: none;
+  background: var(--vyre-primary);
 }
 
-.vyre-nav-create svg {
-  width: 22px;
-  height: 22px;
+.vyre-fab svg {
+  width: 24px;
+  height: 24px;
   stroke-width: 2.5;
 }
 
-/* ===== EMPTY STATE ===== */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
 .vyre-empty-state {
   display: flex;
   flex-direction: column;
@@ -550,29 +619,52 @@
   text-align: center;
 }
 
-/* ===== LOADING ===== */
+/* ============================================================
+   ERROR DETAILS
+   ============================================================ */
+.vyre-error-details {
+  background: var(--vyre-surface);
+  border: 1px solid var(--vyre-border);
+  border-radius: var(--r-sm);
+  padding: var(--sp-md);
+  margin-top: var(--sp-sm);
+}
+
+.vyre-error-details summary {
+  font-size: var(--fs-2xs);
+  color: var(--vyre-muted);
+  cursor: pointer;
+  transition: color var(--duration) var(--ease);
+}
+
+.vyre-error-details summary:hover {
+  color: var(--vyre-text-secondary);
+}
+
+/* ============================================================
+   SPINNER
+   ============================================================ */
 .vyre-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--c-border);
-  border-top-color: var(--c-brand);
+  border: 2px solid var(--vyre-border);
+  border-top-color: var(--vyre-primary);
   border-radius: var(--r-full);
-  animation: spin 0.7s linear infinite;
+  animation: vyre-spin 0.65s linear infinite;
 }
 
-@keyframes spin {
+@keyframes vyre-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 480px) {
-  .vyre-header-main {
-    padding: 0 var(--sp-md);
-  }
-
+/* ============================================================
+   RESPONSIVE — Mobile First
+   ============================================================ */
+@media (max-width: 768px) {
   .vyre-post {
+    margin: var(--sp-xs) var(--sp-sm);
     padding: var(--sp-md);
   }
 
@@ -584,15 +676,30 @@
     padding-left: 46px;
   }
 
-  .vyre-post-avatar {
+  .vyre-post-avatar,
+  .vyre-avatar {
     width: 36px;
     height: 36px;
     font-size: var(--fs-xs);
   }
 
-  .vyre-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: var(--fs-xs);
+  .vyre-header-main {
+    padding: 0 var(--sp-md);
+  }
+
+  .vyre-fab {
+    bottom: 72px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 380px) {
+  .vyre-post-actions {
+    gap: var(--sp-lg);
+  }
+
+  .vyre-logo {
+    font-size: var(--fs-lg);
   }
 }
