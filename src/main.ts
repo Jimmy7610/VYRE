@@ -540,10 +540,18 @@ const commentInput = document.getElementById('comment-input') as HTMLTextAreaEle
 let commentSubmitBtn = document.getElementById('comment-submit-btn') as HTMLButtonElement;
 
 let activeCommentPostId: string | null = null;
+let lastActiveElement: HTMLElement | null = null;
 
 function closeCommentsDrawer() {
   if (!commentsDrawer || !commentsBackdrop || !commentsPanel) return;
   activeCommentPostId = null;
+
+  // Restore scroll and focus
+  document.body.style.overflow = '';
+  if (lastActiveElement) {
+    lastActiveElement.focus();
+    lastActiveElement = null;
+  }
 
   commentsBackdrop.classList.remove('opacity-100');
   commentsBackdrop.classList.add('opacity-0');
@@ -563,6 +571,10 @@ commentsBackdrop?.addEventListener('click', closeCommentsDrawer);
 async function openCommentsDrawer(post: Post) {
   if (!commentsDrawer || !commentsBackdrop || !commentsPanel || !commentsList) return;
   activeCommentPostId = post.id;
+  lastActiveElement = document.activeElement as HTMLElement | null;
+
+  // Lock body scroll
+  document.body.style.overflow = 'hidden';
 
   // Show drawer
   commentsDrawer.classList.remove('pointer-events-none');
@@ -576,8 +588,11 @@ async function openCommentsDrawer(post: Post) {
     commentsPanel.classList.add('translate-y-0', 'sm:translate-x-0');
   });
 
-  // reset composer
-  if (commentInput) commentInput.value = '';
+  // reset composer and focus
+  if (commentInput) {
+    commentInput.value = '';
+    commentInput.focus();
+  }
   if (commentSubmitBtn) commentSubmitBtn.disabled = true;
 
   // loading state
@@ -658,6 +673,13 @@ async function openCommentsDrawer(post: Post) {
     });
   }
 }
+
+// Close drawer on ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && activeCommentPostId) {
+    closeCommentsDrawer();
+  }
+});
 
 function renderCommentItem(comment: Comment): string {
   const relTime = getRelativeTime(new Date(comment.createdAt));
@@ -755,21 +777,78 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// === UTILS ===
-function showToast(message: string) {
-  const toast = document.createElement('div');
-  toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-[var(--vyre-card)] text-white px-5 py-3 rounded-full text-sm font-medium z-50 transition-all duration-300 ease-in-out opacity-0 translate-y-4 pointer-events-none shadow-lg border border-[var(--vyre-border-light)]';
-  toast.textContent = message;
-  document.body.appendChild(toast);
+// === UTILS: TOAST MANAGER ===
+class ToastManager {
+  private container = document.getElementById('toast-container');
+  private queue: { message: string, variant: 'info' | 'success' | 'error' }[] = [];
+  private activeToast: HTMLElement | null = null;
+  private isAnimating = false;
 
-  // Fade in
-  requestAnimationFrame(() => {
-    toast.classList.remove('opacity-0', 'translate-y-4');
-  });
+  show(message: string, variant: 'info' | 'success' | 'error' = 'info') {
+    // Deduplicate
+    if (this.queue.length > 0 && this.queue[this.queue.length - 1].message === message) return;
+    if (this.activeToast?.dataset.message === message) return;
 
-  // Fade out and remove
-  setTimeout(() => {
-    toast.classList.add('opacity-0', 'translate-y-2');
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
+    this.queue.push({ message, variant });
+    this.processQueue();
+  }
+
+  private processQueue() {
+    if (this.isAnimating || this.activeToast || this.queue.length === 0 || !this.container) return;
+
+    const toast = this.queue.shift()!;
+    this.isAnimating = true;
+
+    const el = document.createElement('div');
+    el.dataset.message = toast.message;
+
+    let bg = 'bg-[var(--vyre-card)]';
+    let border = 'border-[var(--vyre-border-light)]';
+    let icon = `<svg class="w-4 h-4 text-[var(--vyre-primary)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+    if (toast.variant === 'error') {
+      border = 'border-[var(--vyre-danger)]';
+      icon = `<svg class="w-4 h-4 text-[var(--vyre-danger)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    } else if (toast.variant === 'success') {
+      border = 'border-[var(--vyre-success)]';
+      icon = `<svg class="w-4 h-4 text-[var(--vyre-success)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+    }
+
+    el.className = `flex items-start sm:items-center gap-3 ${bg} border ${border} text-white px-4 py-3 rounded-2xl sm:rounded-full text-[13px] font-medium transition-all duration-300 ease-out translate-y-8 opacity-0 shadow-xl max-w-sm pointer-events-auto`;
+    el.innerHTML = `${icon}<span class="leading-relaxed whitespace-pre-wrap">${toast.message}</span>`;
+
+    this.container.appendChild(el);
+    this.activeToast = el;
+
+    // Fade in
+    requestAnimationFrame(() => {
+      // Small delay ensures transition triggers
+      setTimeout(() => {
+        el.classList.remove('translate-y-8', 'opacity-0');
+        this.isAnimating = false;
+      }, 10);
+    });
+
+    // Auto dismiss
+    setTimeout(() => {
+      this.dismiss(el);
+    }, toast.variant === 'error' ? 4000 : 2500);
+  }
+
+  private dismiss(el: HTMLElement) {
+    el.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => {
+      if (el.parentNode) el.remove();
+      if (this.activeToast === el) {
+        this.activeToast = null;
+        this.processQueue();
+      }
+    }, 300);
+  }
+}
+
+const toastManager = new ToastManager();
+
+function showToast(message: string, variant: 'info' | 'success' | 'error' = 'info') {
+  toastManager.show(message, variant);
 }
