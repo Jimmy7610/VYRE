@@ -186,8 +186,45 @@
       <!-- Feed Content Area -->
       <main id="feed-container"
         class="flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth">
-        <div id="loading-spinner" class="flex justify-center p-8 hidden">
-          <div class="vyre-spinner"></div>
+        <!-- Initial Loading State -->
+        <div id="loading-spinner" class="hidden flex-col gap-4 p-4">
+          <!-- Skeleton Post 1 -->
+          <div class="vyre-post animate-pulse" style="border-color: transparent;">
+            <div class="vyre-post-header flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
+              <div class="flex flex-col gap-2">
+                <div class="w-32 h-3 rounded bg-[var(--vyre-border)]"></div>
+                <div class="w-16 h-2 rounded bg-[var(--vyre-border-light)]"></div>
+              </div>
+            </div>
+            <div class="space-y-3 mb-4">
+              <div class="w-[90%] h-3 rounded bg-[var(--vyre-border)]"></div>
+              <div class="w-[75%] h-3 rounded bg-[var(--vyre-border)]"></div>
+              <div class="w-[85%] h-3 rounded bg-[var(--vyre-border)]"></div>
+            </div>
+            <div class="vyre-post-actions flex gap-6 pt-2">
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+            </div>
+          </div>
+
+          <!-- Skeleton Post 2 -->
+          <div class="vyre-post animate-pulse" style="border-color: transparent; opacity: 0.7;">
+            <div class="vyre-post-header flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
+              <div class="flex flex-col gap-2">
+                <div class="w-24 h-3 rounded bg-[var(--vyre-border)]"></div>
+                <div class="w-12 h-2 rounded bg-[var(--vyre-border-light)]"></div>
+              </div>
+            </div>
+            <div class="w-full aspect-video rounded-xl bg-[var(--vyre-border)] mb-4"></div>
+            <div class="vyre-post-actions flex gap-6 pt-2">
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+            </div>
+          </div>
         </div>
       </main>
 

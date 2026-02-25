@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike, fetchComments, submitComment, Comment } from '../api/feed';
+import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike, fetchComments, submitComment, Comment, fetchSinglePost } from '../api/feed';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -370,6 +370,8 @@ async function loadFeed() {
       feedContainer.appendChild(postEl);
     });
 
+    setupRealtimeSubscriptions();
+
   } catch (error: any) {
     console.error('Failed to load feed:', error);
     loadingSpinner.classList.add('hidden');
@@ -389,6 +391,86 @@ async function loadFeed() {
     `;
     feedContainer.appendChild(errorEl);
   }
+}
+
+// === REALTIME SUBSCRIPTIONS ===
+let realtimeChannel: any = null;
+
+function setupRealtimeSubscriptions() {
+  if (!supabase || realtimeChannel) return;
+
+  realtimeChannel = supabase.channel('vyre-feed')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
+      const newPost = await fetchSinglePost(payload.new.id);
+      if (newPost && feedContainer) {
+        // Prepend to feed
+        const postEl = createPostElement(newPost);
+        const firstPost = feedContainer.querySelector('.vyre-post');
+        if (firstPost) {
+          feedContainer.insertBefore(postEl, firstPost);
+        } else {
+          const empty = feedContainer.querySelector('.vyre-empty-state');
+          if (empty) empty.remove();
+          feedContainer.appendChild(postEl);
+        }
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, (payload) => {
+      const newRec = payload.new as any;
+      const oldRec = payload.old as any;
+      const postId = payload.table === 'likes' ? (newRec?.post_id || oldRec?.post_id) : null;
+      if (!postId) return;
+
+      const postCard = document.querySelector(`.vyre-post[data-post-id="${postId}"]`);
+      if (!postCard) return;
+
+      const isInsert = payload.eventType === 'INSERT';
+      const isDelete = payload.eventType === 'DELETE';
+      const userId = newRec?.user_id || oldRec?.user_id;
+
+      // Ignore our own actions (optimistic UI handles it)
+      if (currentUser && currentUser.id === userId) return;
+
+      const likeCountSpan = postCard.querySelector('.like-count');
+      if (likeCountSpan) {
+        let currentCount = parseInt(likeCountSpan.textContent || '0', 10);
+        if (isInsert) currentCount++;
+        if (isDelete) currentCount = Math.max(0, currentCount - 1);
+        likeCountSpan.textContent = currentCount.toString();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, (payload) => {
+      const newRec = payload.new as any;
+      const postId = newRec.post_id;
+
+      const postCard = document.querySelector(`.vyre-post[data-post-id="${postId}"]`);
+      if (postCard) {
+        const countSpan = postCard.querySelector('.comment-count');
+        if (countSpan) {
+          // Ignore own
+          if (!(currentUser && (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id))) {
+            let currentCount = parseInt(countSpan.textContent || '0', 10);
+            countSpan.textContent = (currentCount + 1).toString();
+          }
+        }
+      }
+
+      if (activeCommentPostId === postId && commentsList) {
+        if (!(currentUser && (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id))) {
+          fetchComments(postId).then(comments => {
+            if (activeCommentPostId === postId && commentsList) {
+              if (comments.length === 0) {
+                commentsList.innerHTML = `<div class="p-8 text-center text-sm text-gray-400">No comments yet. Be the first to start the conversation.</div>`;
+              } else {
+                commentsList.innerHTML = comments.map(renderCommentItem).join('');
+                commentsList.scrollTop = commentsList.scrollHeight;
+              }
+            }
+          });
+        }
+      }
+    })
+    .subscribe();
 }
 
 function createEmptyState(): HTMLElement {
@@ -596,7 +678,25 @@ async function openCommentsDrawer(post: Post) {
   if (commentSubmitBtn) commentSubmitBtn.disabled = true;
 
   // loading state
-  commentsList.innerHTML = `<div class="p-4 text-center text-sm font-mono text-gray-500 animate-pulse">Loading comments...</div>`;
+  commentsList.innerHTML = `
+    <div class="px-4 py-4 animate-pulse">
+      <div class="flex gap-3 mb-6">
+        <div class="w-8 h-8 rounded-full bg-[var(--vyre-border)] shrink-0"></div>
+        <div class="flex-1 space-y-2 py-1">
+          <div class="w-24 h-2 bg-[var(--vyre-border-light)] rounded"></div>
+          <div class="w-3/4 h-2 bg-[var(--vyre-border)] rounded"></div>
+          <div class="w-1/2 h-2 bg-[var(--vyre-border)] rounded"></div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="w-8 h-8 rounded-full bg-[var(--vyre-border)] shrink-0 opacity-50"></div>
+        <div class="flex-1 space-y-2 py-1 opacity-50">
+          <div class="w-20 h-2 bg-[var(--vyre-border-light)] rounded"></div>
+          <div class="w-2/3 h-2 bg-[var(--vyre-border)] rounded"></div>
+        </div>
+      </div>
+    </div>
+  `;
 
   // fetch
   const comments = await fetchComments(post.id);

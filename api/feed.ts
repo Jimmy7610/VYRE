@@ -109,6 +109,33 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
   }
 };
 
+export const fetchSinglePost = async (id: string): Promise<Post | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('posts')
+    .select('id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+
+  const row = data as any;
+
+  return {
+    id: row.id,
+    author: {
+      username: row.profiles?.username || 'Unknown',
+      avatarUrl: row.profiles?.avatar_url
+    },
+    content: row.content,
+    imageUrl: row.post_images?.[0]?.image_url || null,
+    likes: row.likes?.[0]?.count ?? 0,
+    comments: row.comments?.[0]?.count ?? 0,
+    likedByMe: false, // populated locally if needed
+    createdAt: row.created_at
+  };
+};
+
 export const createPost = async (content: string, authorId: string, imageUrl?: string): Promise<string> => {
   if (!supabase) throw new Error('Supabase not configured');
   try {
