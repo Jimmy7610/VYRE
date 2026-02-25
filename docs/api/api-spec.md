@@ -1,11 +1,13 @@
 # VYRE API Specification
 
 ## Overview
+
 This document outlines the core endpoints for the VYRE application. Currently, these are implemented as stubs for the Beta Runner.
 
 ---
 
 ### 1. Global Feed
+
 - **Endpoint:** `GET /api/feed/global`
 - **Method:** `GET`
 - **Auth required:** No (Public Read-Only)
@@ -16,6 +18,7 @@ This document outlines the core endpoints for the VYRE application. Currently, t
 - **Abuse Considerations:** Rapid sequential unauthenticated scraping. IP-based throttling and optional proof-of-work/captcha for extreme spikes.
 
 ### 2. Create Post
+
 - **Endpoint:** `POST /api/posts`
 - **Method:** `POST`
 - **Auth required:** Yes (Bearer Token)
@@ -26,6 +29,7 @@ This document outlines the core endpoints for the VYRE application. Currently, t
 - **Abuse Considerations:** Spamming large payloads. Payload size must be strictly limited at the gateway before hitting application logic.
 
 ### 3. Like Post
+
 - **Endpoint:** `POST /api/posts/:id/like`
 - **Method:** `POST`
 - **Auth required:** Yes
@@ -35,6 +39,7 @@ This document outlines the core endpoints for the VYRE application. Currently, t
 - **Abuse Considerations:** Repeated toggling to stress DB/cache. Fast-fail unauthenticated requests. Debounce toggling on client.
 
 ### 4. Upload Image (Signed URL)
+
 - **Endpoint:** `POST /api/images/sign-upload`
 - **Method:** `POST`
 - **Auth required:** Yes
@@ -45,6 +50,7 @@ This document outlines the core endpoints for the VYRE application. Currently, t
 - **Abuse Considerations:** Storage exhaustion. Pre-signed URLs must expire quickly (e.g., 5 mins) and max-size must be enforced by the storage bucket independently.
 
 ### 5. Submit Report
+
 - **Endpoint:** `POST /api/reports`
 - **Method:** `POST`
 - **Auth required:** Yes

@@ -2,6 +2,7 @@
 -- Supabase / PostgreSQL
 -- Security-first layout utilizing UUIDs and soft deletes.
 -- No business logic, triggers, or RLS policies in this file.
+-- Note: This file is informational; source of truth is Supabase + migration docs.
 
 -- Enable UUID extension if not present (Supabase usually has this by default)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
