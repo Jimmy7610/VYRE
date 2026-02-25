@@ -58,7 +58,8 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, likes, comments, created_at, profiles(username, avatar_url), post_images(image_url)')
+      .select('id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -79,8 +80,8 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
       },
       content: row.content,
       imageUrl: row.post_images?.[0]?.image_url || null,
-      likes: row.likes || 0,
-      comments: row.comments || 0,
+      likes: row.likes?.[0]?.count ?? 0,
+      comments: row.comments?.[0]?.count ?? 0,
       createdAt: row.created_at
     }));
 
