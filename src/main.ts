@@ -1,6 +1,26 @@
 /// <reference types="vite/client" />
-import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike, fetchComments, submitComment, Comment, fetchSinglePost } from '../api/feed';
-import { fetchProfileByUsername, fetchProfilePosts, updateProfile, uploadAvatar, Profile } from '../api/profile';
+// API
+import {
+  getGlobalFeed,
+  checkSchemaStatus,
+  fetchUserLikes,
+  toggleLike,
+  fetchComments,
+  submitComment,
+  fetchSinglePost,
+  createPost,
+  uploadImage
+} from './api/feed';
+
+import {
+  fetchProfileByUsername,
+  fetchProfilePosts,
+  updateProfile,
+  uploadAvatar,
+} from './api/profile';
+
+// Types
+import { Post, Comment, SupabaseDevError, Profile } from './types';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -99,9 +119,12 @@ const hasSupabaseCredentials = Boolean(
 
 if (hasSupabaseCredentials && supabase) {
   // Check Initial Session
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    handleAuthChange(session);
-  }).catch((err: any) => console.warn('VYRE: Session check failed:', err));
+  supabase.auth
+    .getSession()
+    .then(({ data: { session } }) => {
+      handleAuthChange(session);
+    })
+    .catch((err: any) => console.warn('VYRE: Session check failed:', err));
 
   // Listen for Auth Changes
   supabase.auth.onAuthStateChange((_event, session) => {
@@ -117,14 +140,23 @@ function handleAuthChange(session: any) {
   if (currentUser) {
     if (userHandle) {
       // Optimistic set based on email/meta
-      const handleStr = currentUser.user_metadata?.username || currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
+      const handleStr =
+        currentUser.user_metadata?.username ||
+        currentUser.user_metadata?.display_name ||
+        currentUser.email?.split('@')[0] ||
+        'U';
       userHandle.textContent = handleStr.charAt(0).toUpperCase();
       userHandle.classList.remove('hidden');
       userHandleIcon?.classList.add('hidden');
-      if (composeAvatarInitial) composeAvatarInitial.textContent = handleStr.charAt(0).toUpperCase();
+      if (composeAvatarInitial)
+        composeAvatarInitial.textContent = handleStr.charAt(0).toUpperCase();
 
       // Fetch actual profile to check for avatar
-      supabase?.from('profiles').select('avatar_url').eq('id', currentUser.id).single()
+      supabase
+        ?.from('profiles')
+        .select('avatar_url')
+        .eq('id', currentUser.id)
+        .single()
         .then(({ data }) => {
           if (data?.avatar_url) {
             const btn = document.getElementById('user-menu-btn');
@@ -182,7 +214,7 @@ function showAuth() {
     mainApp.classList.remove('flex');
     authScreen.classList.remove('hidden', 'opacity-0', 'transition-opacity', 'duration-500');
     if (feedContainer) {
-      Array.from(feedContainer.children).forEach(child => {
+      Array.from(feedContainer.children).forEach((child) => {
         if (child.id !== 'loading-spinner') child.remove();
       });
     }
@@ -279,7 +311,11 @@ menuMyProfileBtn?.addEventListener('click', () => {
   } else if (currentUser) {
     // fallback if username not in metadata
     // try fetching from profile via ID
-    supabase?.from('profiles').select('username').eq('id', currentUser.id).single()
+    supabase
+      ?.from('profiles')
+      .select('username')
+      .eq('id', currentUser.id)
+      .single()
       .then(({ data }) => {
         if (data?.username) loadProfile(data.username);
       });
@@ -292,7 +328,6 @@ menuSettingsBtn?.addEventListener('click', () => {
   closeUserMenu();
   loadSettings();
 });
-
 
 // Bottom Nav Routing (rudimentary)
 
@@ -318,7 +353,7 @@ betaAccessBtn?.addEventListener('click', () => {
 // Handle Beta Bar Actions
 betaRefreshBtn?.addEventListener('click', () => {
   if (feedContainer) {
-    Array.from(feedContainer.children).forEach(child => {
+    Array.from(feedContainer.children).forEach((child) => {
       if (child.id !== 'loading-spinner') child.remove();
     });
     loadFeed();
@@ -441,8 +476,6 @@ composeImageRemove?.addEventListener('click', () => {
   composeBtn.disabled = composeText.value.trim().length === 0;
 });
 
-import { createPost, uploadImage } from '../api/feed';
-
 composeBtn?.addEventListener('click', async () => {
   if (!currentUser) return;
   const content = composeText.value.trim();
@@ -478,12 +511,11 @@ composeBtn?.addEventListener('click', async () => {
     // 5. Refresh Feed
     // We could prepend, but reloading ensures purity and proper sorting
     if (feedContainer) {
-      Array.from(feedContainer.children).forEach(child => {
+      Array.from(feedContainer.children).forEach((child) => {
         if (child.id !== 'loading-spinner') child.remove();
       });
       await loadFeed();
     }
-
   } catch (err: any) {
     console.error('Post creation failed:', err);
     if (composeError) {
@@ -512,9 +544,9 @@ async function loadFeed() {
 
     // Fetch user likes if logged in
     if (currentUser) {
-      const postIds = response.data.map(p => p.id);
+      const postIds = response.data.map((p) => p.id);
       const likedPostIds = await fetchUserLikes(postIds, currentUser.id);
-      response.data.forEach(p => {
+      response.data.forEach((p) => {
         p.likedByMe = likedPostIds.has(p.id);
       });
     }
@@ -526,13 +558,12 @@ async function loadFeed() {
       return;
     }
 
-    response.data.forEach(post => {
+    response.data.forEach((post) => {
       const postEl = createPostElement(post);
       feedContainer.appendChild(postEl);
     });
 
     setupRealtimeSubscriptions();
-
   } catch (error: any) {
     console.error('Failed to load feed:', error);
     loadingSpinner.classList.add('hidden');
@@ -541,14 +572,17 @@ async function loadFeed() {
     errorEl.className = 'p-6 text-center font-mono';
     errorEl.innerHTML = `
       <p class="text-red-500 text-sm mb-2">${devErr.userMessage || 'Failed to load signal'}</p>
-      ${devErr.details ? `
+      ${devErr.details
+        ? `
         <details class="text-left bg-gray-900 border border-gray-800 rounded-sm p-3 mt-2">
           <summary class="text-gray-500 text-[10px] cursor-pointer hover:text-gray-300 transition-colors">Dev details</summary>
           <div class="mt-2 text-[11px] text-gray-400 space-y-1">
             ${devErr.code ? `<p><span class="text-gray-600">Code:</span> ${devErr.code}</p>` : ''}
             <p><span class="text-gray-600">Message:</span> ${devErr.details}</p>
           </div>
-        </details>` : ''}
+        </details>`
+        : ''
+      }
     `;
     feedContainer.appendChild(errorEl);
   }
@@ -560,26 +594,31 @@ let realtimeChannel: any = null;
 function setupRealtimeSubscriptions() {
   if (!supabase || realtimeChannel) return;
 
-  realtimeChannel = supabase.channel('vyre-feed')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
-      const newPost = await fetchSinglePost(payload.new.id);
-      if (newPost && feedContainer) {
-        // Prepend to feed
-        const postEl = createPostElement(newPost);
-        const firstPost = feedContainer.querySelector('.vyre-post');
-        if (firstPost) {
-          feedContainer.insertBefore(postEl, firstPost);
-        } else {
-          const empty = feedContainer.querySelector('.vyre-empty-state');
-          if (empty) empty.remove();
-          feedContainer.appendChild(postEl);
+  realtimeChannel = supabase
+    .channel('vyre-feed')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'posts' },
+      async (payload) => {
+        const newPost = await fetchSinglePost(payload.new.id);
+        if (newPost && feedContainer) {
+          // Prepend to feed
+          const postEl = createPostElement(newPost);
+          const firstPost = feedContainer.querySelector('.vyre-post');
+          if (firstPost) {
+            feedContainer.insertBefore(postEl, firstPost);
+          } else {
+            const empty = feedContainer.querySelector('.vyre-empty-state');
+            if (empty) empty.remove();
+            feedContainer.appendChild(postEl);
+          }
         }
       }
-    })
+    )
     .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, (payload) => {
       const newRec = payload.new as any;
       const oldRec = payload.old as any;
-      const postId = payload.table === 'likes' ? (newRec?.post_id || oldRec?.post_id) : null;
+      const postId = payload.table === 'likes' ? newRec?.post_id || oldRec?.post_id : null;
       if (!postId) return;
 
       const postCard = document.querySelector(`.vyre-post[data-post-id="${postId}"]`);
@@ -609,7 +648,12 @@ function setupRealtimeSubscriptions() {
         const countSpan = postCard.querySelector('.comment-count');
         if (countSpan) {
           // Ignore own
-          if (!(currentUser && (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id))) {
+          if (
+            !(
+              currentUser &&
+              (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id)
+            )
+          ) {
             let currentCount = parseInt(countSpan.textContent || '0', 10);
             countSpan.textContent = (currentCount + 1).toString();
           }
@@ -617,8 +661,13 @@ function setupRealtimeSubscriptions() {
       }
 
       if (activeCommentPostId === postId && commentsList) {
-        if (!(currentUser && (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id))) {
-          fetchComments(postId).then(comments => {
+        if (
+          !(
+            currentUser &&
+            (newRec.author_id === currentUser.id || newRec.user_id === currentUser.id)
+          )
+        ) {
+          fetchComments(postId).then((comments) => {
             if (activeCommentPostId === postId && commentsList) {
               if (comments.length === 0) {
                 commentsList.innerHTML = `<div class="p-8 text-center text-sm text-gray-400">No comments yet. Be the first to start the conversation.</div>`;
@@ -639,7 +688,18 @@ async function loadProfile(username: string) {
   // Show base view
   showProfileView();
 
-  if (!profileHeaderTitle || !profileAvatarLarge || !profileDisplayName || !profileUsernameEl || !profileBio || !profileStatPosts || !profileStatLikes || !profileLoading || !profileFeedList) return;
+  if (
+    !profileHeaderTitle ||
+    !profileAvatarLarge ||
+    !profileDisplayName ||
+    !profileUsernameEl ||
+    !profileBio ||
+    !profileStatPosts ||
+    !profileStatLikes ||
+    !profileLoading ||
+    !profileFeedList
+  )
+    return;
 
   // Reset / loading state
   profileHeaderTitle.textContent = username;
@@ -682,14 +742,13 @@ async function loadProfile(username: string) {
       profileFeedList.innerHTML = `<div class="p-8 text-center text-gray-500 font-mono">No posts yet.</div>`;
     } else {
       // Re-use rendering
-      posts.forEach(post => {
+      posts.forEach((post) => {
         const postEl = createPostElement(post);
         // Special case: we don't necessarily want profile links clickable if we're ALREADY on the profile page
         // But for MVP, keeping them clickable is fine (just re-renders same page).
         profileFeedList.appendChild(postEl);
       });
     }
-
   } catch (err) {
     console.error('Failed to load profile:', err);
     profileLoading.classList.add('hidden');
@@ -720,7 +779,11 @@ async function loadSettings() {
     // Fetch own profile
     try {
       // Just fetch basic info by ID
-      const { data, error } = await supabase!.from('profiles').select('*').eq('id', currentUser.id).single();
+      const { data, error } = await supabase!
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
       if (error) throw error;
 
       currentProfileData = data as Profile;
@@ -736,7 +799,6 @@ async function loadSettings() {
       }
 
       settingsSaveBtn.disabled = false;
-
     } catch (err) {
       console.error('Failed to load settings:', err);
       showToast('Error loading profile settings.', 'error');
@@ -776,7 +838,7 @@ settingsAvatarInput?.addEventListener('change', (e) => {
 });
 
 // Settings Inputs Beta Gates
-[settingsDisplayName, settingsUsername, settingsBio].forEach(input => {
+[settingsDisplayName, settingsUsername, settingsBio].forEach((input) => {
   input?.addEventListener('focus', () => {
     if (inBetaSession && !currentUser) {
       input.blur();
@@ -826,7 +888,7 @@ settingsSaveBtn?.addEventListener('click', async () => {
       username: uName,
       displayName: dName,
       bio: bio,
-      avatarUrl: newAvatarUrl
+      avatarUrl: newAvatarUrl,
     });
 
     showToast('Profile updated successfully!', 'success');
@@ -838,7 +900,6 @@ settingsSaveBtn?.addEventListener('click', async () => {
 
     // Auto-return to profile
     loadProfile(uName);
-
   } catch (err: any) {
     console.error('Settings save err:', err);
     showToast(err.userMessage || 'Failed to update profile', 'error');
@@ -1195,7 +1256,7 @@ searchInput?.addEventListener('input', (e) => {
   const term = (e.target as HTMLInputElement).value.toLowerCase();
   if (!feedContainer) return;
 
-  Array.from(feedContainer.children).forEach(child => {
+  Array.from(feedContainer.children).forEach((child) => {
     if (child.id === 'loading-spinner') return;
 
     if (child.classList.contains('vyre-post')) {
@@ -1219,17 +1280,22 @@ const debugContent = document.getElementById('debug-content');
 async function openDebugPanel() {
   if (!debugPanel || !debugContent) return;
   debugPanel.classList.remove('hidden');
-  debugContent.innerHTML = '<div class="text-gray-500 text-xs font-mono animate-pulse">Running checks...</div>';
+  debugContent.innerHTML =
+    '<div class="text-gray-500 text-xs font-mono animate-pulse">Running checks...</div>';
 
   try {
     const status = await checkSchemaStatus();
     debugContent.innerHTML = `
       <div class="space-y-2">
-        ${Object.entries(status).map(([key, val]) => `
+        ${Object.entries(status)
+        .map(
+          ([key, val]) => `
           <div class="flex items-start gap-3 bg-gray-900/50 border border-gray-800 rounded-sm p-3">
             <span class="text-[10px] text-gray-600 font-mono uppercase w-16 shrink-0 pt-0.5">${key}</span>
             <span class="text-[11px] font-mono ${val.startsWith('✅') ? 'text-green-500' : val.startsWith('⚠') ? 'text-yellow-500' : 'text-red-400'}">${val}</span>
-          </div>`).join('')}
+          </div>`
+        )
+        .join('')}
       </div>
     `;
   } catch (err: any) {
@@ -1256,7 +1322,7 @@ document.addEventListener('keydown', (e) => {
 // === UTILS: TOAST MANAGER ===
 class ToastManager {
   private container = document.getElementById('toast-container');
-  private queue: { message: string, variant: 'info' | 'success' | 'error' }[] = [];
+  private queue: { message: string; variant: 'info' | 'success' | 'error' }[] = [];
   private activeToast: HTMLElement | null = null;
   private isAnimating = false;
 
@@ -1306,9 +1372,12 @@ class ToastManager {
     });
 
     // Auto dismiss
-    setTimeout(() => {
-      this.dismiss(el);
-    }, toast.variant === 'error' ? 4000 : 2500);
+    setTimeout(
+      () => {
+        this.dismiss(el);
+      },
+      toast.variant === 'error' ? 4000 : 2500
+    );
   }
 
   private dismiss(el: HTMLElement) {

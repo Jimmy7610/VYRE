@@ -1,67 +1,40 @@
-import { supabase } from '../src/lib/supabase';
+import { supabase } from '../lib/supabase';
+import { Post, Comment, SupabaseDevError } from '../types';
 
 // Global Feed API
-
-export interface SupabaseDevError {
-  userMessage: string;
-  code?: string;
-  details?: string;
-}
-
-export interface Comment {
-  id: string;
-  postId: string;
-  author: {
-    username: string;
-    avatarUrl?: string;
-  };
-  content: string;
-  createdAt: string;
-}
-
-export interface Post {
-  id: string;
-  author: {
-    username: string;
-    avatarUrl?: string;
-  };
-  content: string;
-  imageUrl?: string;
-  likes: number;
-  comments: number;
-  likedByMe: boolean;
-  createdAt: string;
-}
 
 function getDemoFeed(): Post[] {
   return [
     {
       id: 'demo-001',
       author: { username: 'admin_vyre' },
-      content: 'Welcome to the VYRE Beta. This is an early build showcasing the global feed experience. Security first, signal over noise.',
+      content:
+        'Welcome to the VYRE Beta. This is an early build showcasing the global feed experience. Security first, signal over noise.',
       likes: 1337,
       comments: 42,
       likedByMe: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     },
     {
       id: 'demo-002',
       author: { username: 'security_bot' },
-      content: 'System notice: You are viewing demo data. Connect your Supabase credentials to see real posts.',
+      content:
+        'System notice: You are viewing demo data. Connect your Supabase credentials to see real posts.',
       likes: 0,
       comments: 1,
       likedByMe: false,
-      createdAt: new Date(Date.now() - 3600000).toISOString()
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
     },
     {
       id: 'demo-003',
       author: { username: 'early_adopter' },
-      content: 'The typography looks sharp. Waiting for the full backend hookup to test posting with media. This platform has potential.',
+      content:
+        'The typography looks sharp. Waiting for the full backend hookup to test posting with media. This platform has potential.',
       likes: 12,
       comments: 3,
       likedByMe: false,
-      createdAt: new Date(Date.now() - 7200000).toISOString()
-    }
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+    },
   ];
 }
 
@@ -73,7 +46,9 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)')
+      .select(
+        'id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)'
+      )
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -82,7 +57,7 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
       const devErr: SupabaseDevError = {
         userMessage: 'Failed to load feed',
         code: error.code,
-        details: error.message + (error.hint ? ` | Hint: ${error.hint}` : '')
+        details: error.message + (error.hint ? ` | Hint: ${error.hint}` : ''),
       };
       throw devErr;
     }
@@ -91,21 +66,24 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
       id: row.id,
       author: {
         username: row.profiles?.username || 'Unknown',
-        avatarUrl: row.profiles?.avatar_url
+        avatarUrl: row.profiles?.avatar_url,
       },
       content: row.content,
       imageUrl: row.post_images?.[0]?.image_url || null,
       likes: row.likes?.[0]?.count ?? 0,
       comments: row.comments?.[0]?.count ?? 0,
       likedByMe: false, // Populated separately by fetchUserLikes
-      createdAt: row.created_at
+      createdAt: row.created_at,
     }));
 
     return { data: posts };
   } catch (err: any) {
     console.error('Failed to get global feed:', err);
     if (err.userMessage) throw err; // Already structured
-    throw { userMessage: 'Failed to load feed', details: String(err?.message || err) } as SupabaseDevError;
+    throw {
+      userMessage: 'Failed to load feed',
+      details: String(err?.message || err),
+    } as SupabaseDevError;
   }
 };
 
@@ -113,7 +91,9 @@ export const fetchSinglePost = async (id: string): Promise<Post | null> => {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from('posts')
-    .select('id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)')
+    .select(
+      'id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)'
+    )
     .eq('id', id)
     .single();
 
@@ -125,18 +105,22 @@ export const fetchSinglePost = async (id: string): Promise<Post | null> => {
     id: row.id,
     author: {
       username: row.profiles?.username || 'Unknown',
-      avatarUrl: row.profiles?.avatar_url
+      avatarUrl: row.profiles?.avatar_url,
     },
     content: row.content,
     imageUrl: row.post_images?.[0]?.image_url || null,
     likes: row.likes?.[0]?.count ?? 0,
     comments: row.comments?.[0]?.count ?? 0,
     likedByMe: false, // populated locally if needed
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 };
 
-export const createPost = async (content: string, authorId: string, imageUrl?: string): Promise<string> => {
+export const createPost = async (
+  content: string,
+  authorId: string,
+  imageUrl?: string
+): Promise<string> => {
   if (!supabase) throw new Error('Supabase not configured');
   try {
     // 1. Insert Post
@@ -150,17 +134,19 @@ export const createPost = async (content: string, authorId: string, imageUrl?: s
       .single();
 
     if (postError) {
-      throw { userMessage: 'Failed to create post', code: postError.code, details: postError.message + (postError.hint ? ` | Hint: ${postError.hint}` : '') } as SupabaseDevError;
+      throw {
+        userMessage: 'Failed to create post',
+        code: postError.code,
+        details: postError.message + (postError.hint ? ` | Hint: ${postError.hint}` : ''),
+      } as SupabaseDevError;
     }
 
     // 2. Insert Image if provided
     if (imageUrl && postData?.id) {
-      const { error: imgError } = await supabase
-        .from('post_images')
-        .insert({
-          post_id: postData.id,
-          image_url: imageUrl,
-        });
+      const { error: imgError } = await supabase.from('post_images').insert({
+        post_id: postData.id,
+        image_url: imageUrl,
+      });
 
       if (imgError) {
         console.error('Failed to link image to post:', imgError.message);
@@ -171,7 +157,10 @@ export const createPost = async (content: string, authorId: string, imageUrl?: s
   } catch (err: any) {
     console.error('Failed to create post:', err);
     if (err.userMessage) throw err;
-    throw { userMessage: 'Failed to create post', details: String(err?.message || err) } as SupabaseDevError;
+    throw {
+      userMessage: 'Failed to create post',
+      details: String(err?.message || err),
+    } as SupabaseDevError;
   }
 };
 
@@ -187,18 +176,23 @@ export const uploadImage = async (file: File): Promise<string> => {
       .upload(filePath, file);
 
     if (uploadError) {
-      throw { userMessage: 'Failed to upload image', code: (uploadError as any).statusCode, details: uploadError.message } as SupabaseDevError;
+      throw {
+        userMessage: 'Failed to upload image',
+        code: (uploadError as any).statusCode,
+        details: uploadError.message,
+      } as SupabaseDevError;
     }
 
-    const { data } = supabase.storage
-      .from('post_images')
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from('post_images').getPublicUrl(filePath);
 
     return data.publicUrl;
   } catch (err: any) {
     console.error('Failed to upload image:', err);
     if (err.userMessage) throw err;
-    throw { userMessage: 'Failed to upload image', details: String(err?.message || err) } as SupabaseDevError;
+    throw {
+      userMessage: 'Failed to upload image',
+      details: String(err?.message || err),
+    } as SupabaseDevError;
   }
 };
 
@@ -240,20 +234,26 @@ export async function toggleLike(
       .eq('user_id', userId);
 
     if (error) {
-      throw { userMessage: 'Failed to unlike', code: error.code, details: error.message } as SupabaseDevError;
+      throw {
+        userMessage: 'Failed to unlike',
+        code: error.code,
+        details: error.message,
+      } as SupabaseDevError;
     }
   } else {
     // Like: INSERT (handle unique constraint conflict)
-    const { error } = await supabase
-      .from('likes')
-      .insert({ post_id: postId, user_id: userId });
+    const { error } = await supabase.from('likes').insert({ post_id: postId, user_id: userId });
 
     if (error) {
       // 23505 = unique_violation — already liked, treat as success
       if (error.code === '23505') {
         console.warn('Like already exists (duplicate), treating as success');
       } else {
-        throw { userMessage: 'Failed to like', code: error.code, details: error.message } as SupabaseDevError;
+        throw {
+          userMessage: 'Failed to like',
+          code: error.code,
+          details: error.message,
+        } as SupabaseDevError;
       }
     }
   }
@@ -293,8 +293,8 @@ export async function fetchComments(postId: string): Promise<Comment[]> {
       createdAt: row.created_at,
       author: {
         username: row.profiles?.username || 'Unknown',
-        avatarUrl: row.profiles?.avatar_url
-      }
+        avatarUrl: row.profiles?.avatar_url,
+      },
     }));
   } catch (err) {
     console.error('fetchComments error:', err);
@@ -302,7 +302,11 @@ export async function fetchComments(postId: string): Promise<Comment[]> {
   }
 }
 
-export async function submitComment(postId: string, userId: string, content: string): Promise<Comment> {
+export async function submitComment(
+  postId: string,
+  userId: string,
+  content: string
+): Promise<Comment> {
   if (!supabase) throw { userMessage: 'Supabase not configured' } as SupabaseDevError;
   try {
     const { data, error } = await supabase
@@ -310,13 +314,17 @@ export async function submitComment(postId: string, userId: string, content: str
       .insert({
         post_id: postId,
         author_id: userId,
-        content: content
+        content: content,
       })
       .select('id, post_id, content, created_at, profiles(username, avatar_url)')
       .single();
 
     if (error) {
-      throw { userMessage: 'Failed to submit comment', code: error.code, details: error.message } as SupabaseDevError;
+      throw {
+        userMessage: 'Failed to submit comment',
+        code: error.code,
+        details: error.message,
+      } as SupabaseDevError;
     }
 
     const profileData = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
@@ -328,18 +336,25 @@ export async function submitComment(postId: string, userId: string, content: str
       createdAt: data.created_at,
       author: {
         username: profileData?.username || 'Unknown',
-        avatarUrl: profileData?.avatar_url
-      }
+        avatarUrl: profileData?.avatar_url,
+      },
     };
   } catch (err: any) {
     console.error('submitComment error:', err);
     if (err.userMessage) throw err;
-    throw { userMessage: 'Failed to submit comment', details: String(err?.message || err) } as SupabaseDevError;
+    throw {
+      userMessage: 'Failed to submit comment',
+      details: String(err?.message || err),
+    } as SupabaseDevError;
   }
 }
 
 // Debug: Check DB schema status
-export async function checkSchemaStatus(): Promise<{ posts: string; profiles: string; bucket: string }> {
+export async function checkSchemaStatus(): Promise<{
+  posts: string;
+  profiles: string;
+  bucket: string;
+}> {
   const result = { posts: '❌ Not found', profiles: '❌ Not found', bucket: '❌ Not found' };
 
   if (!supabase) {
@@ -347,14 +362,22 @@ export async function checkSchemaStatus(): Promise<{ posts: string; profiles: st
   }
 
   try {
-    const { count, error } = await supabase.from('posts').select('*', { count: 'exact', head: true });
+    const { count, error } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true });
     result.posts = error ? `❌ ${error.code}: ${error.message}` : `✅ OK (${count ?? 0} rows)`;
-  } catch (e: any) { result.posts = `❌ ${e.message}`; }
+  } catch (e: any) {
+    result.posts = `❌ ${e.message}`;
+  }
 
   try {
-    const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
     result.profiles = error ? `❌ ${error.code}: ${error.message}` : `✅ OK (${count ?? 0} rows)`;
-  } catch (e: any) { result.profiles = `❌ ${e.message}`; }
+  } catch (e: any) {
+    result.profiles = `❌ ${e.message}`;
+  }
 
   try {
     const { data, error } = await supabase.storage.listBuckets();
@@ -362,9 +385,13 @@ export async function checkSchemaStatus(): Promise<{ posts: string; profiles: st
       result.bucket = `❌ ${error.message}`;
     } else {
       const found = data?.find((b: any) => b.name === 'post_images');
-      result.bucket = found ? `✅ OK (public: ${found.public})` : '❌ Bucket "post_images" not found';
+      result.bucket = found
+        ? `✅ OK (public: ${found.public})`
+        : '❌ Bucket "post_images" not found';
     }
-  } catch (e: any) { result.bucket = `❌ ${e.message}`; }
+  } catch (e: any) {
+    result.bucket = `❌ ${e.message}`;
+  }
 
   return result;
 }
