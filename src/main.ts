@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike } from '../api/feed';
+import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike, fetchComments, submitComment, Comment } from '../api/feed';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -408,6 +408,7 @@ function getRelativeTime(date: Date): string {
 function createPostElement(post: Post): HTMLElement {
   const article = document.createElement('article');
   article.className = 'vyre-post';
+  article.dataset.postId = post.id;
 
   const relTime = getRelativeTime(new Date(post.createdAt));
   const initial = post.author.username.charAt(0).toUpperCase();
@@ -438,9 +439,9 @@ function createPostElement(post: Post): HTMLElement {
             <svg class="vyre-icon-heart" fill="${post.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
             <span class="vyre-action-count like-count">${post.likes}</span>
           </button>
-          <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
+          <button class="vyre-action-btn comment-btn" ${!currentUser && !inBetaSession ? 'disabled title="Sign in to interact"' : ''}>
             <svg class="vyre-icon-comment" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            <span class="vyre-action-count">${post.comments}</span>
+            <span class="vyre-action-count comment-count">${post.comments}</span>
           </button>
           <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
             <svg class="vyre-icon-share" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
@@ -498,7 +499,161 @@ function createPostElement(post: Post): HTMLElement {
     });
   }
 
+  // Comment Button Logic
+  const commentBtn = article.querySelector('.comment-btn') as HTMLButtonElement;
+  if (commentBtn) {
+    commentBtn.addEventListener('click', () => {
+      openCommentsDrawer(post);
+    });
+  }
+
   return article;
+}
+
+// === COMMENTS DRAWER LOGIC ===
+const commentsDrawer = document.getElementById('comments-drawer');
+const commentsBackdrop = document.getElementById('comments-backdrop');
+const commentsPanel = document.getElementById('comments-panel');
+const commentsCloseBtn = document.getElementById('comments-close-btn');
+const commentsList = document.getElementById('comments-list');
+const commentInput = document.getElementById('comment-input') as HTMLTextAreaElement;
+let commentSubmitBtn = document.getElementById('comment-submit-btn') as HTMLButtonElement;
+
+let activeCommentPostId: string | null = null;
+
+function closeCommentsDrawer() {
+  if (!commentsDrawer || !commentsBackdrop || !commentsPanel) return;
+  activeCommentPostId = null;
+
+  commentsBackdrop.classList.remove('opacity-100');
+  commentsBackdrop.classList.add('opacity-0');
+
+  commentsPanel.classList.remove('translate-y-0', 'sm:translate-x-0');
+  commentsPanel.classList.add('translate-y-full', 'sm:translate-y-0', 'sm:translate-x-full');
+
+  setTimeout(() => {
+    commentsDrawer.classList.add('pointer-events-none');
+    if (commentsList) commentsList.innerHTML = '';
+  }, 300);
+}
+
+commentsCloseBtn?.addEventListener('click', closeCommentsDrawer);
+commentsBackdrop?.addEventListener('click', closeCommentsDrawer);
+
+async function openCommentsDrawer(post: Post) {
+  if (!commentsDrawer || !commentsBackdrop || !commentsPanel || !commentsList) return;
+  activeCommentPostId = post.id;
+
+  // Show drawer
+  commentsDrawer.classList.remove('pointer-events-none');
+
+  // Trigger animations (small delay for display:block to take effect if we used it, but we use fixed/pointer-events)
+  requestAnimationFrame(() => {
+    commentsBackdrop.classList.remove('opacity-0');
+    commentsBackdrop.classList.add('opacity-100');
+
+    commentsPanel.classList.remove('translate-y-full', 'sm:translate-x-full');
+    commentsPanel.classList.add('translate-y-0', 'sm:translate-x-0');
+  });
+
+  // reset composer
+  if (commentInput) commentInput.value = '';
+  if (commentSubmitBtn) commentSubmitBtn.disabled = true;
+
+  // loading state
+  commentsList.innerHTML = `<div class="p-4 text-center text-sm font-mono text-gray-500 animate-pulse">Loading comments...</div>`;
+
+  // fetch
+  const comments = await fetchComments(post.id);
+
+  // render
+  if (activeCommentPostId !== post.id) return; // closed or changed before finish
+
+  if (comments.length === 0) {
+    commentsList.innerHTML = `<div class="p-8 text-center text-sm text-gray-400">No comments yet. Be the first to start the conversation.</div>`;
+  } else {
+    commentsList.innerHTML = comments.map(renderCommentItem).join('');
+  }
+
+  // Setup compose logic (clone button to clear old listeners)
+  if (commentSubmitBtn) {
+    const newBtn = commentSubmitBtn.cloneNode(true) as HTMLButtonElement;
+    commentSubmitBtn.parentNode?.replaceChild(newBtn, commentSubmitBtn);
+    commentSubmitBtn = newBtn;
+
+    // Auto-disable if empty
+    commentInput?.addEventListener('input', () => {
+      commentSubmitBtn.disabled = commentInput.value.trim().length === 0;
+    });
+
+    commentSubmitBtn.addEventListener('click', async () => {
+      if (inBetaSession && !currentUser) {
+        showToast('Read-only beta: Comments are disabled');
+        return;
+      }
+      if (!currentUser) {
+        showToast('Please sign in to comment');
+        return;
+      }
+
+      const content = commentInput.value.trim();
+      if (!content) return;
+
+      commentSubmitBtn.disabled = true;
+      commentInput.disabled = true;
+      commentSubmitBtn.textContent = '...';
+
+      try {
+        const newComment = await submitComment(post.id, currentUser.id, content);
+
+        // Remove empty state if present
+        if (comments.length === 0) commentsList.innerHTML = '';
+        comments.push(newComment);
+
+        // Append new comment
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = renderCommentItem(newComment);
+        commentsList.appendChild(tempDiv.firstElementChild as HTMLElement);
+
+        // Scroll to bottom
+        commentsList.scrollTop = commentsList.scrollHeight;
+
+        // Optimistically update post comment count UI
+        post.comments += 1;
+        const postCard = document.querySelector(`.vyre-post[data-post-id="${post.id}"]`);
+        if (postCard) {
+          const countSpan = postCard.querySelector('.comment-count');
+          if (countSpan) countSpan.textContent = post.comments.toString();
+        }
+
+        commentInput.value = '';
+      } catch (err: any) {
+        showToast(err.userMessage || 'Failed to post comment');
+      } finally {
+        commentSubmitBtn.disabled = commentInput.value.trim().length === 0;
+        commentInput.disabled = false;
+        commentSubmitBtn.textContent = 'Post';
+        commentInput.focus();
+      }
+    });
+  }
+}
+
+function renderCommentItem(comment: Comment): string {
+  const relTime = getRelativeTime(new Date(comment.createdAt));
+  const initial = comment.author.username.charAt(0).toUpperCase();
+  return `
+    <div class="px-4 py-3 border-b border-[var(--vyre-border)] last:border-0 flex gap-3 animate-fade-in">
+      <div class="vyre-post-avatar !w-8 !h-8 !text-xs shrink-0">${initial}</div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span class="vyre-post-username !text-xs">@${comment.author.username}</span>
+          <span class="vyre-post-time !text-[10px]">${relTime}</span>
+        </div>
+        <p class="text-[13px] text-gray-200 leading-relaxed break-words whitespace-pre-wrap">${comment.content}</p>
+      </div>
+    </div>
+  `;
 }
 
 // === DEBUG PANEL ===

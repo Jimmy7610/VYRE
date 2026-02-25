@@ -8,6 +8,17 @@ export interface SupabaseDevError {
   details?: string;
 }
 
+export interface Comment {
+  id: string;
+  postId: string;
+  author: {
+    username: string;
+    avatarUrl?: string;
+  };
+  content: string;
+  createdAt: string;
+}
+
 export interface Post {
   id: string;
   author: {
@@ -227,6 +238,77 @@ export async function toggleLike(
     .eq('post_id', postId);
 
   return { liked: !currentlyLiked, count: count ?? 0 };
+}
+
+// ============================================================================
+// COMMENTS API
+// ============================================================================
+
+export async function fetchComments(postId: string): Promise<Comment[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('id, post_id, content, created_at, profiles(username, avatar_url)')
+      .eq('post_id', postId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Failed to fetch comments:', error.message);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      postId: row.post_id,
+      content: row.content,
+      createdAt: row.created_at,
+      author: {
+        username: row.profiles?.username || 'Unknown',
+        avatarUrl: row.profiles?.avatar_url
+      }
+    }));
+  } catch (err) {
+    console.error('fetchComments error:', err);
+    return [];
+  }
+}
+
+export async function submitComment(postId: string, userId: string, content: string): Promise<Comment> {
+  if (!supabase) throw { userMessage: 'Supabase not configured' } as SupabaseDevError;
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: postId,
+        author_id: userId,
+        content: content
+      })
+      .select('id, post_id, content, created_at, profiles(username, avatar_url)')
+      .single();
+
+    if (error) {
+      throw { userMessage: 'Failed to submit comment', code: error.code, details: error.message } as SupabaseDevError;
+    }
+
+    const profileData = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+
+    return {
+      id: data.id,
+      postId: data.post_id,
+      content: data.content,
+      createdAt: data.created_at,
+      author: {
+        username: profileData?.username || 'Unknown',
+        avatarUrl: profileData?.avatar_url
+      }
+    };
+  } catch (err: any) {
+    console.error('submitComment error:', err);
+    if (err.userMessage) throw err;
+    throw { userMessage: 'Failed to submit comment', details: String(err?.message || err) } as SupabaseDevError;
+  }
 }
 
 // Debug: Check DB schema status

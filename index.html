@@ -222,6 +222,46 @@
         </svg>
       </button>
 
+      <!-- Comments Drawer -->
+      <div id="comments-drawer"
+        class="fixed inset-0 z-50 pointer-events-none flex justify-end xl:absolute xl:inset-0 xl:overflow-hidden">
+        <!-- Backdrop -->
+        <div id="comments-backdrop"
+          class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none">
+        </div>
+
+        <!-- Drawer Content -->
+        <div id="comments-panel"
+          class="relative w-full max-w-md h-[80vh] mt-auto sm:h-full sm:mt-0 bg-[var(--vyre-surface)] border-t sm:border-t-0 sm:border-l border-[var(--vyre-border)] shadow-2xl flex flex-col transform translate-y-full sm:translate-y-0 sm:translate-x-full transition-transform duration-300 pointer-events-auto">
+          <!-- Header -->
+          <div
+            class="flex items-center justify-between px-6 py-4 border-b border-[var(--vyre-border)] bg-[rgba(10,17,29,0.65)] backdrop-blur-md">
+            <h3 class="font-semibold text-white tracking-wide">Comments</h3>
+            <button id="comments-close-btn" class="p-2 -mr-2 text-gray-400 hover:text-white transition-colors">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Comments List -->
+          <div id="comments-list" class="flex-1 overflow-y-auto p-2">
+            <!-- Comments injected here -->
+          </div>
+
+          <!-- Comment Composer -->
+          <div class="p-4 border-t border-[var(--vyre-border)] bg-[var(--vyre-bg)]">
+            <div class="flex gap-3">
+              <textarea id="comment-input"
+                class="flex-1 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--vyre-primary)] focus:ring-1 focus:ring-[var(--vyre-primary)] resize-none"
+                rows="1" placeholder="Add a comment..."></textarea>
+              <button id="comment-submit-btn"
+                class="vyre-btn-primary-sm self-end shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">Post</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Debug Panel (Dev Only) -->
       <div id="debug-panel" class="hidden absolute inset-0 z-50 overflow-y-auto p-6"
         style="background:rgba(8,12,21,0.96); backdrop-filter:blur(20px);">
