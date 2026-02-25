@@ -1,503 +1,806 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0a0e17" />
+    <title>VYRE</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0e17" />
-  <title>VYRE</title>
-  <link rel="stylesheet" href="/src/styles.css" />
-</head>
-
-<body class="overflow-hidden">
-  <div id="app" class="h-[100dvh] w-full flex flex-col relative overflow-hidden mx-auto">
-
-    <!-- ===== AUTH SCREEN ===== -->
-    <section id="auth-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6">
-
-      <div class="mb-10 flex flex-col items-center animate-fade-in-up">
-        <h1 class="vyre-logo text-5xl mb-3" style="font-size:48px;">VYRE</h1>
-        <p class="text-sm leading-relaxed text-center max-w-sm" style="color:var(--c-text-secondary);">
-          Connect. Share. Discover.<br>
-          <span style="color:var(--c-text-muted);">A security-first social platform built around public signal, not
-            noise.</span>
-        </p>
-      </div>
-
-      <div class="w-full max-w-xs space-y-4 animate-fade-in-up">
-        <!-- Auth Form -->
-        <form id="auth-form" class="space-y-3">
-          <input type="email" id="auth-email" placeholder="Email" required class="w-full" />
-          <input type="password" id="auth-password" placeholder="Password" required class="w-full" />
-
-          <div id="auth-error-msg" class="text-xs font-mono min-h-[16px]" style="color:var(--vyre-danger);"></div>
-
-          <div class="flex gap-2">
-            <button type="submit" id="btn-login" class="flex-1 py-3.5 font-semibold rounded-md transition-colors"
-              style="background:white; color:var(--c-bg);">
-              Sign In
-            </button>
-            <button type="button" id="btn-signup" class="flex-1 py-3.5 font-semibold rounded-md transition-colors"
-              style="background:var(--c-bg-card); color:var(--c-text-secondary); border:1px solid var(--c-border);">
-              Sign Up
-            </button>
-          </div>
-        </form>
-
-        <div class="relative py-4">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full" style="border-top:1px solid var(--c-border);"></div>
-          </div>
-          <div class="relative flex justify-center text-[10px] font-mono uppercase tracking-widest"
-            style="color:var(--c-text-muted);">
-            <span style="background:var(--c-bg); padding:0 8px;">OR</span>
-          </div>
-        </div>
-
-        <!-- Beta Access Button -->
-        <div id="beta-access-container">
-          <button id="beta-access-btn"
-            class="w-full py-3.5 px-4 font-mono text-sm uppercase tracking-wider rounded-md transition-colors overflow-hidden"
-            style="background:transparent; color:var(--c-accent); border:1px solid var(--c-accent);">
-            <span class="flex items-center justify-center gap-2">
-              <span class="w-2 h-2 rounded-full animate-pulse" style="background:var(--c-accent);"></span>
-              Beta Access (Dev Only)
-            </span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== MAIN APP SHELL ===== -->
-    <section id="main-app" class="hidden flex-col h-full w-full max-w-[760px] mx-auto sm:border-x relative"
-      style="border-color:var(--vyre-border);">
-
-      <!-- Header -->
-      <header class="vyre-header sticky top-0" style="z-index: var(--z-header);">
-        <div class="vyre-header-main">
-          <!-- Left: Search -->
-          <div class="relative flex items-center h-full">
-            <div id="search-toggle-btn" class="vyre-header-icon cursor-pointer z-10 relative" title="Search">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input type="text" id="search-input" placeholder="Search posts..."
-              class="absolute left-8 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-full px-4 py-1.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] transition-all duration-300 w-0 opacity-0 pointer-events-none z-20 shadow-lg">
-          </div>
-
-          <!-- Center: Logo -->
-          <h2 class="vyre-logo">VYRE</h2>
-
-          <!-- Right: Bell + Avatar Menu -->
-          <div class="vyre-header-actions">
-            <div class="vyre-header-icon" title="Notifications (Coming soon)">
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </div>
-
-            <!-- User Menu Container -->
-            <div class="relative">
-              <button id="user-menu-btn" class="vyre-avatar-sm" title="Account menu">
-                <span id="user-handle-initial" class="hidden">U</span>
-                <svg class="w-4 h-4" id="user-handle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </button>
-
-              <!-- Dropdown Menu -->
-              <div id="user-dropdown-menu"
-                class="hidden absolute right-0 mt-2 w-48 bg-[var(--vyre-surface)] border border-[var(--vyre-border)] rounded-xl shadow-2xl py-1 z-50 overflow-hidden transform origin-top-right transition-all duration-200 opacity-0 scale-95">
-                <button id="menu-my-profile-btn"
-                  class="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-[var(--vyre-card-hover)] hover:text-white transition-colors flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  My Profile
-                </button>
-                <button id="menu-settings-btn"
-                  class="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-[var(--vyre-card-hover)] hover:text-white transition-colors flex items-center gap-2">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Edit Profile
-                </button>
-                <div class="h-px bg-[var(--vyre-border-light)] my-1"></div>
-                <button id="logout-btn"
-                  class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors flex items-center gap-2">
-                  <svg class="w-4 h-4 text-red-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab Bar -->
-        <div class="vyre-tabs">
-          <div class="vyre-tab active">Global Feed</div>
-          <div class="vyre-tab" style="opacity:0.5; cursor:not-allowed;" title="Coming soon">Trending</div>
-        </div>
-
-        <!-- Beta Bar (shown only in beta session) -->
-        <div id="beta-bar" class="hidden vyre-beta-bar">
-          <div class="flex items-center gap-2">
-            <span class="vyre-beta-badge">READ-ONLY BETA</span>
-          </div>
-          <div class="vyre-beta-actions">
-            <button id="beta-refresh-btn" class="vyre-btn-ghost">
-              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
-            <button id="beta-signin-btn" class="vyre-btn-primary-sm">Sign in</button>
-          </div>
-        </div>
-      </header>
-
-      <!-- Compose Section -->
-      <div id="compose-container" class="hidden vyre-composer">
-        <div class="vyre-composer-inner">
-          <div class="vyre-avatar">
-            <span id="compose-avatar-initial">U</span>
-          </div>
-          <div class="flex-1 min-w-0 flex flex-col pt-1">
-            <textarea id="compose-text" rows="2" maxlength="500" placeholder="What's happening?"
-              class="custom-scrollbar"></textarea>
-
-            <!-- Image Preview -->
-            <div id="compose-image-preview-container" class="hidden relative mt-2 w-full overflow-hidden"
-              style="border-radius:var(--r-md); border:1px solid var(--vyre-border);">
-              <img id="compose-image-preview" src="" alt="Preview" class="w-full object-cover"
-                style="aspect-ratio:16/9;">
-              <button id="compose-image-remove"
-                class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full transition-colors"
-                style="background:rgba(0,0,0,0.7); color:white;">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Compose Actions -->
-        <div class="vyre-composer-actions">
-          <div class="flex items-center gap-2">
-            <label for="compose-file" class="vyre-header-icon" style="width:32px; height:32px; cursor:pointer;">
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </label>
-            <input type="file" id="compose-file" accept="image/png, image/jpeg, image/webp" class="hidden">
-            <span id="compose-error" class="text-xs font-mono" style="color:var(--vyre-danger);"></span>
-          </div>
-
-          <button id="compose-btn" disabled class="vyre-btn-post">
-            <span id="compose-btn-text">Post</span>
-            <div id="compose-btn-spinner" class="hidden absolute inset-0 flex items-center justify-center"
-              style="background:var(--c-brand);">
-              <div class="vyre-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:white;">
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <!-- Feed Content Area -->
-      <main id="feed-container"
-        class="flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth">
-        <!-- Initial Loading State -->
-        <div id="loading-spinner" class="hidden flex-col gap-4 p-4">
-          <!-- Skeleton Post 1 -->
-          <div class="vyre-post animate-pulse" style="border-color: transparent;">
-            <div class="vyre-post-header flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
-              <div class="flex flex-col gap-2">
-                <div class="w-32 h-3 rounded bg-[var(--vyre-border)]"></div>
-                <div class="w-16 h-2 rounded bg-[var(--vyre-border-light)]"></div>
-              </div>
-            </div>
-            <div class="space-y-3 mb-4">
-              <div class="w-[90%] h-3 rounded bg-[var(--vyre-border)]"></div>
-              <div class="w-[75%] h-3 rounded bg-[var(--vyre-border)]"></div>
-              <div class="w-[85%] h-3 rounded bg-[var(--vyre-border)]"></div>
-            </div>
-            <div class="vyre-post-actions flex gap-6 pt-2">
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-            </div>
-          </div>
-
-          <!-- Skeleton Post 2 -->
-          <div class="vyre-post animate-pulse" style="border-color: transparent; opacity: 0.7;">
-            <div class="vyre-post-header flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
-              <div class="flex flex-col gap-2">
-                <div class="w-24 h-3 rounded bg-[var(--vyre-border)]"></div>
-                <div class="w-12 h-2 rounded bg-[var(--vyre-border-light)]"></div>
-              </div>
-            </div>
-            <div class="w-full aspect-video rounded-xl bg-[var(--vyre-border)] mb-4"></div>
-            <div class="vyre-post-actions flex gap-6 pt-2">
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-              <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <!-- Profile View -->
-      <main id="profile-view"
-        class="hidden flex-col flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth bg-[var(--vyre-bg)] z-10">
-        <!-- Profile Header Native-like -->
-        <div
-          class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[rgba(10,17,29,0.85)] backdrop-blur-md border-b border-[var(--vyre-border)]">
-          <button id="profile-back-btn" class="p-2 -ml-2 text-gray-400 hover:text-white transition-colors">
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <span id="profile-header-title" class="font-bold text-white tracking-wide">Profile</span>
-          <div class="w-8"></div> <!-- Spacer for centering -->
-        </div>
-
-        <!-- Identity Section -->
-        <div class="p-6 border-b border-[var(--vyre-border)]">
-          <div class="flex items-start justify-between mb-4">
-            <div id="profile-avatar-large"
-              class="w-20 h-20 rounded-full bg-[var(--vyre-surface)] border-2 border-[var(--vyre-border-light)] flex items-center justify-center text-2xl font-bold text-gray-500 overflow-hidden shrink-0">
-              <!-- Avatar injected or img tag -->
-            </div>
-            <!-- Optional Follow/Edit button could go here -->
-          </div>
-
-          <h2 id="profile-display-name" class="text-xl font-bold text-white tracking-tight mb-1">...</h2>
-          <p id="profile-username" class="text-sm font-mono text-[var(--vyre-primary)] mb-4">@...</p>
-
-          <p id="profile-bio" class="text-[13px] text-gray-300 leading-relaxed break-words whitespace-pre-wrap mb-6">
+  <body class="overflow-hidden">
+    <div id="app" class="h-[100dvh] w-full flex flex-col relative overflow-hidden mx-auto">
+      <!-- ===== AUTH SCREEN ===== -->
+      <section
+        id="auth-screen"
+        class="absolute inset-0 z-50 flex flex-col items-center justify-center p-6"
+      >
+        <div class="mb-10 flex flex-col items-center animate-fade-in-up">
+          <h1 class="vyre-logo text-5xl mb-3" style="font-size: 48px">VYRE</h1>
+          <p
+            class="text-sm leading-relaxed text-center max-w-sm"
+            style="color: var(--c-text-secondary)"
+          >
+            Connect. Share. Discover.<br />
+            <span style="color: var(--c-text-muted)"
+              >A security-first social platform built around public signal, not noise.</span
+            >
           </p>
-
-          <div class="flex gap-6 text-sm">
-            <div class="flex gap-1.5"><span id="profile-stat-posts" class="font-bold text-white">0</span><span
-                class="text-gray-500">Posts</span></div>
-            <div class="flex gap-1.5"><span id="profile-stat-likes" class="font-bold text-white">0</span><span
-                class="text-gray-500">Likes</span></div>
-          </div>
         </div>
 
-        <!-- Profile Feed Loading State -->
-        <div id="profile-loading" class="hidden p-8 flex justify-center">
-          <div class="vyre-spinner"></div>
-        </div>
+        <div class="w-full max-w-xs space-y-4 animate-fade-in-up">
+          <!-- Auth Form -->
+          <form id="auth-form" class="space-y-3">
+            <input type="email" id="auth-email" placeholder="Email" required class="w-full" />
+            <input
+              type="password"
+              id="auth-password"
+              placeholder="Password"
+              required
+              class="w-full"
+            />
 
-        <!-- Profile Feed List -->
-        <div id="profile-feed-list" class="flex-1"></div>
-      </main>
+            <div
+              id="auth-error-msg"
+              class="text-xs font-mono min-h-[16px]"
+              style="color: var(--vyre-danger)"
+            ></div>
 
-      <!-- Settings View -->
-      <main id="settings-view"
-        class="hidden flex-col flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth bg-[var(--vyre-bg)] z-10">
-        <!-- Settings Header Native-like -->
-        <div
-          class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[rgba(10,17,29,0.85)] backdrop-blur-md border-b border-[var(--vyre-border)]">
-          <button id="settings-back-btn" class="p-2 -ml-2 text-gray-400 hover:text-white transition-colors">
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <span class="font-bold text-white tracking-wide">Edit Profile</span>
-          <div class="w-8"></div>
-        </div>
+            <div class="flex gap-2">
+              <button
+                type="submit"
+                id="btn-login"
+                class="flex-1 py-3.5 font-semibold rounded-md transition-colors"
+                style="background: white; color: var(--c-bg)"
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                id="btn-signup"
+                class="flex-1 py-3.5 font-semibold rounded-md transition-colors"
+                style="
+                  background: var(--c-bg-card);
+                  color: var(--c-text-secondary);
+                  border: 1px solid var(--c-border);
+                "
+              >
+                Sign Up
+              </button>
+            </div>
+          </form>
 
-        <div class="p-6 max-w-sm mx-auto w-full">
-          <!-- Avatar Uploader -->
-          <div class="flex flex-col items-center mb-8 relative group cursor-pointer" id="settings-avatar-wrapper">
-            <div id="settings-avatar-preview"
-              class="w-24 h-24 rounded-full bg-[var(--vyre-surface)] border-2 border-[var(--vyre-border-light)] flex items-center justify-center text-3xl font-bold text-gray-500 overflow-hidden shrink-0">
-              <!-- Initials or Image -->
+          <div class="relative py-4">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full" style="border-top: 1px solid var(--c-border)"></div>
             </div>
             <div
-              class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              class="relative flex justify-center text-[10px] font-mono uppercase tracking-widest"
+              style="color: var(--c-text-muted)"
+            >
+              <span style="background: var(--c-bg); padding: 0 8px">OR</span>
             </div>
-            <input type="file" id="settings-avatar-input" accept="image/png, image/jpeg, image/webp" class="hidden">
           </div>
 
-          <!-- Form Fields -->
-          <div class="space-y-5">
-            <div>
-              <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2">Display Name</label>
-              <input type="text" id="settings-display-name"
-                class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] transition-colors"
-                placeholder="Your Name">
-            </div>
-            <div>
-              <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2">Username</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
-                <input type="text" id="settings-username"
-                  class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg pl-8 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] font-mono transition-colors"
-                  placeholder="username">
+          <!-- Beta Access Button -->
+          <div id="beta-access-container">
+            <button
+              id="beta-access-btn"
+              class="w-full py-3.5 px-4 font-mono text-sm uppercase tracking-wider rounded-md transition-colors overflow-hidden"
+              style="
+                background: transparent;
+                color: var(--c-accent);
+                border: 1px solid var(--c-accent);
+              "
+            >
+              <span class="flex items-center justify-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full animate-pulse"
+                  style="background: var(--c-accent)"
+                ></span>
+                Beta Access (Dev Only)
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== MAIN APP SHELL ===== -->
+      <section
+        id="main-app"
+        class="hidden flex-col h-full w-full max-w-[760px] mx-auto sm:border-x relative"
+        style="border-color: var(--vyre-border)"
+      >
+        <!-- Header -->
+        <header class="vyre-header sticky top-0" style="z-index: var(--z-header)">
+          <div class="vyre-header-main">
+            <!-- Left: Search -->
+            <div class="relative flex items-center h-full">
+              <div
+                id="search-toggle-btn"
+                class="vyre-header-icon cursor-pointer z-10 relative"
+                title="Search"
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
               </div>
-              <p class="text-[10px] text-gray-500 mt-1">3-20 characters, lowercase letters, numbers, and underscores.
-              </p>
-            </div>
-            <div>
-              <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2">Bio</label>
-              <textarea id="settings-bio"
-                class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] resize-none transition-colors"
-                rows="3" placeholder="A bit about yourself..."></textarea>
+              <input
+                type="text"
+                id="search-input"
+                placeholder="Search posts..."
+                class="absolute left-8 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-full px-4 py-1.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] transition-all duration-300 w-0 opacity-0 pointer-events-none z-20 shadow-lg"
+              />
             </div>
 
-            <button id="settings-save-btn"
-              class="w-full py-3 mt-4 bg-[var(--vyre-primary)] hover:bg-[var(--vyre-primary-hover)] text-white font-semibold rounded-lg text-sm transition-colors relative">
-              <span id="settings-save-text">Save Changes</span>
-              <div id="settings-save-spinner" class="hidden flex items-center justify-center absolute inset-0">
-                <div class="vyre-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:white;">
+            <!-- Center: Logo -->
+            <h2 class="vyre-logo">VYRE</h2>
+
+            <!-- Right: Bell + Avatar Menu -->
+            <div class="vyre-header-actions">
+              <div class="vyre-header-icon" title="Notifications (Coming soon)">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </div>
+
+              <!-- User Menu Container -->
+              <div class="relative">
+                <button id="user-menu-btn" class="vyre-avatar-sm" title="Account menu">
+                  <span id="user-handle-initial" class="hidden">U</span>
+                  <svg
+                    class="w-4 h-4"
+                    id="user-handle-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div
+                  id="user-dropdown-menu"
+                  class="hidden absolute right-0 mt-2 w-48 bg-[var(--vyre-surface)] border border-[var(--vyre-border)] rounded-xl shadow-2xl py-1 z-50 overflow-hidden transform origin-top-right transition-all duration-200 opacity-0 scale-95"
+                >
+                  <button
+                    id="menu-my-profile-btn"
+                    class="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-[var(--vyre-card-hover)] hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <svg
+                      class="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    My Profile
+                  </button>
+                  <button
+                    id="menu-settings-btn"
+                    class="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-[var(--vyre-card-hover)] hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <svg
+                      class="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Edit Profile
+                  </button>
+                  <div class="h-px bg-[var(--vyre-border-light)] my-1"></div>
+                  <button
+                    id="logout-btn"
+                    class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 hover:text-red-400 transition-colors flex items-center gap-2"
+                  >
+                    <svg
+                      class="w-4 h-4 text-red-500/70"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Sign Out
+                  </button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Bar -->
+          <div class="vyre-tabs">
+            <div class="vyre-tab active">Global Feed</div>
+            <div class="vyre-tab" style="opacity: 0.5; cursor: not-allowed" title="Coming soon">
+              Trending
+            </div>
+          </div>
+
+          <!-- Beta Bar (shown only in beta session) -->
+          <div id="beta-bar" class="hidden vyre-beta-bar">
+            <div class="flex items-center gap-2">
+              <span class="vyre-beta-badge">READ-ONLY BETA</span>
+            </div>
+            <div class="vyre-beta-actions">
+              <button id="beta-refresh-btn" class="vyre-btn-ghost">
+                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                Refresh
+              </button>
+              <button id="beta-signin-btn" class="vyre-btn-primary-sm">Sign in</button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Compose Section -->
+        <div id="compose-container" class="hidden vyre-composer">
+          <div class="vyre-composer-inner">
+            <div class="vyre-avatar">
+              <span id="compose-avatar-initial">U</span>
+            </div>
+            <div class="flex-1 min-w-0 flex flex-col pt-1">
+              <textarea
+                id="compose-text"
+                rows="2"
+                maxlength="500"
+                placeholder="What's happening?"
+                class="custom-scrollbar"
+              ></textarea>
+
+              <!-- Image Preview -->
+              <div
+                id="compose-image-preview-container"
+                class="hidden relative mt-2 w-full overflow-hidden"
+                style="border-radius: var(--r-md); border: 1px solid var(--vyre-border)"
+              >
+                <img
+                  id="compose-image-preview"
+                  src=""
+                  alt="Preview"
+                  class="w-full object-cover"
+                  style="aspect-ratio: 16/9"
+                />
+                <button
+                  id="compose-image-remove"
+                  class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full transition-colors"
+                  style="background: rgba(0, 0, 0, 0.7); color: white"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compose Actions -->
+          <div class="vyre-composer-actions">
+            <div class="flex items-center gap-2">
+              <label
+                for="compose-file"
+                class="vyre-header-icon"
+                style="width: 32px; height: 32px; cursor: pointer"
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </label>
+              <input
+                type="file"
+                id="compose-file"
+                accept="image/png, image/jpeg, image/webp"
+                class="hidden"
+              />
+              <span
+                id="compose-error"
+                class="text-xs font-mono"
+                style="color: var(--vyre-danger)"
+              ></span>
+            </div>
+
+            <button id="compose-btn" disabled class="vyre-btn-post">
+              <span id="compose-btn-text">Post</span>
+              <div
+                id="compose-btn-spinner"
+                class="hidden absolute inset-0 flex items-center justify-center"
+                style="background: var(--c-brand)"
+              >
+                <div
+                  class="vyre-spinner"
+                  style="width: 16px; height: 16px; border-width: 2px; border-top-color: white"
+                ></div>
               </div>
             </button>
           </div>
         </div>
-      </main>
 
+        <!-- Feed Content Area -->
+        <main
+          id="feed-container"
+          class="flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth"
+        >
+          <!-- Initial Loading State -->
+          <div id="loading-spinner" class="hidden flex-col gap-4 p-4">
+            <!-- Skeleton Post 1 -->
+            <div class="vyre-post animate-pulse" style="border-color: transparent">
+              <div class="vyre-post-header flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
+                <div class="flex flex-col gap-2">
+                  <div class="w-32 h-3 rounded bg-[var(--vyre-border)]"></div>
+                  <div class="w-16 h-2 rounded bg-[var(--vyre-border-light)]"></div>
+                </div>
+              </div>
+              <div class="space-y-3 mb-4">
+                <div class="w-[90%] h-3 rounded bg-[var(--vyre-border)]"></div>
+                <div class="w-[75%] h-3 rounded bg-[var(--vyre-border)]"></div>
+                <div class="w-[85%] h-3 rounded bg-[var(--vyre-border)]"></div>
+              </div>
+              <div class="vyre-post-actions flex gap-6 pt-2">
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              </div>
+            </div>
 
-      <!-- Bottom Navigation (4 items) -->
-      <nav class="vyre-bottom-nav" style="z-index: var(--z-bottom-nav);">
-        <div class="vyre-nav-item active">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </div>
-        <div class="vyre-nav-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        </div>
-        <div class="vyre-nav-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </div>
-        <div class="vyre-nav-item">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        </div>
-      </nav>
-
-      <!-- Floating Action Button -->
-      <button id="fab-create" class="vyre-fab disabled" title="Sign in to post">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-
-
-
-      <!-- Debug Panel (Dev Only) -->
-      <div id="debug-panel" class="hidden absolute inset-0 overflow-y-auto p-6"
-        style="background:rgba(8,12,21,0.96); backdrop-filter:blur(20px); z-index: var(--z-modal);">
-        <div class="max-w-[600px] mx-auto">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-sm font-bold text-white font-mono tracking-wider">/debug</h3>
-            <button id="debug-close-btn" class="vyre-btn-ghost">Close</button>
+            <!-- Skeleton Post 2 -->
+            <div class="vyre-post animate-pulse" style="border-color: transparent; opacity: 0.7">
+              <div class="vyre-post-header flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-[var(--vyre-border)]"></div>
+                <div class="flex flex-col gap-2">
+                  <div class="w-24 h-3 rounded bg-[var(--vyre-border)]"></div>
+                  <div class="w-12 h-2 rounded bg-[var(--vyre-border-light)]"></div>
+                </div>
+              </div>
+              <div class="w-full aspect-video rounded-xl bg-[var(--vyre-border)] mb-4"></div>
+              <div class="vyre-post-actions flex gap-6 pt-2">
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+                <div class="w-8 h-4 rounded bg-[var(--vyre-border-light)]"></div>
+              </div>
+            </div>
           </div>
-          <div id="debug-content" class="space-y-3">
-            <div class="text-xs font-mono animate-pulse" style="color:var(--c-text-muted);">Running checks...</div>
+        </main>
+
+        <!-- Profile View -->
+        <main
+          id="profile-view"
+          class="hidden flex-col flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth bg-[var(--vyre-bg)] z-10"
+        >
+          <!-- Profile Header Native-like -->
+          <div
+            class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[rgba(10,17,29,0.85)] backdrop-blur-md border-b border-[var(--vyre-border)]"
+          >
+            <button
+              id="profile-back-btn"
+              class="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <span id="profile-header-title" class="font-bold text-white tracking-wide"
+              >Profile</span
+            >
+            <div class="w-8"></div>
+            <!-- Spacer for centering -->
           </div>
-          <div class="mt-6 pt-4" style="border-top:1px solid var(--c-border);">
-            <h4 class="text-[10px] font-mono uppercase tracking-widest mb-3" style="color:var(--c-text-muted);">Expected
-              DB Objects</h4>
-            <div class="text-[11px] font-mono space-y-1" style="color:var(--c-text-muted);">
-              <p>Table: <span style="color:var(--c-text);">posts</span> (id, author_id, content, created_at)</p>
-              <p>Table: <span style="color:var(--c-text);">profiles</span> (id, username, avatar_url, display_name)</p>
-              <p>Table: <span style="color:var(--c-text);">post_images</span> (id, post_id, image_url)</p>
-              <p>Table: <span style="color:var(--c-text);">likes</span> (user_id, post_id)</p>
-              <p>Table: <span style="color:var(--c-text);">comments</span> (post_id, author_id, content)</p>
-              <p>Bucket: <span style="color:var(--c-text);">post_images</span> (public)</p>
+
+          <!-- Identity Section -->
+          <div class="p-6 border-b border-[var(--vyre-border)]">
+            <div class="flex items-start justify-between mb-4">
+              <div
+                id="profile-avatar-large"
+                class="w-20 h-20 rounded-full bg-[var(--vyre-surface)] border-2 border-[var(--vyre-border-light)] flex items-center justify-center text-2xl font-bold text-gray-500 overflow-hidden shrink-0"
+              >
+                <!-- Avatar injected or img tag -->
+              </div>
+              <!-- Optional Follow/Edit button could go here -->
+            </div>
+
+            <h2 id="profile-display-name" class="text-xl font-bold text-white tracking-tight mb-1">
+              ...
+            </h2>
+            <p id="profile-username" class="text-sm font-mono text-[var(--vyre-primary)] mb-4">
+              @...
+            </p>
+
+            <p
+              id="profile-bio"
+              class="text-[13px] text-gray-300 leading-relaxed break-words whitespace-pre-wrap mb-6"
+            ></p>
+
+            <div class="flex gap-6 text-sm">
+              <div class="flex gap-1.5">
+                <span id="profile-stat-posts" class="font-bold text-white">0</span
+                ><span class="text-gray-500">Posts</span>
+              </div>
+              <div class="flex gap-1.5">
+                <span id="profile-stat-likes" class="font-bold text-white">0</span
+                ><span class="text-gray-500">Likes</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Feed Loading State -->
+          <div id="profile-loading" class="hidden p-8 flex justify-center">
+            <div class="vyre-spinner"></div>
+          </div>
+
+          <!-- Profile Feed List -->
+          <div id="profile-feed-list" class="flex-1"></div>
+        </main>
+
+        <!-- Settings View -->
+        <main
+          id="settings-view"
+          class="hidden flex-col flex-1 overflow-y-auto w-full pb-20 overscroll-y-contain custom-scrollbar scroll-smooth bg-[var(--vyre-bg)] z-10"
+        >
+          <!-- Settings Header Native-like -->
+          <div
+            class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[rgba(10,17,29,0.85)] backdrop-blur-md border-b border-[var(--vyre-border)]"
+          >
+            <button
+              id="settings-back-btn"
+              class="p-2 -ml-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <span class="font-bold text-white tracking-wide">Edit Profile</span>
+            <div class="w-8"></div>
+          </div>
+
+          <div class="p-6 max-w-sm mx-auto w-full">
+            <!-- Avatar Uploader -->
+            <div
+              class="flex flex-col items-center mb-8 relative group cursor-pointer"
+              id="settings-avatar-wrapper"
+            >
+              <div
+                id="settings-avatar-preview"
+                class="w-24 h-24 rounded-full bg-[var(--vyre-surface)] border-2 border-[var(--vyre-border-light)] flex items-center justify-center text-3xl font-bold text-gray-500 overflow-hidden shrink-0"
+              >
+                <!-- Initials or Image -->
+              </div>
+              <div
+                class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="file"
+                id="settings-avatar-input"
+                accept="image/png, image/jpeg, image/webp"
+                class="hidden"
+              />
+            </div>
+
+            <!-- Form Fields -->
+            <div class="space-y-5">
+              <div>
+                <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2"
+                  >Display Name</label
+                >
+                <input
+                  type="text"
+                  id="settings-display-name"
+                  class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] transition-colors"
+                  placeholder="Your Name"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2"
+                  >Username</label
+                >
+                <div class="relative">
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
+                  <input
+                    type="text"
+                    id="settings-username"
+                    class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg pl-8 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] font-mono transition-colors"
+                    placeholder="username"
+                  />
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">
+                  3-20 characters, lowercase letters, numbers, and underscores.
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-mono text-[var(--vyre-muted)] uppercase mb-2"
+                  >Bio</label
+                >
+                <textarea
+                  id="settings-bio"
+                  class="w-full bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--vyre-primary)] resize-none transition-colors"
+                  rows="3"
+                  placeholder="A bit about yourself..."
+                ></textarea>
+              </div>
+
+              <button
+                id="settings-save-btn"
+                class="w-full py-3 mt-4 bg-[var(--vyre-primary)] hover:bg-[var(--vyre-primary-hover)] text-white font-semibold rounded-lg text-sm transition-colors relative"
+              >
+                <span id="settings-save-text">Save Changes</span>
+                <div
+                  id="settings-save-spinner"
+                  class="hidden flex items-center justify-center absolute inset-0"
+                >
+                  <div
+                    class="vyre-spinner"
+                    style="width: 16px; height: 16px; border-width: 2px; border-top-color: white"
+                  ></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <!-- Bottom Navigation (4 items) -->
+        <nav class="vyre-bottom-nav" style="z-index: var(--z-bottom-nav)">
+          <div class="vyre-nav-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+          </div>
+          <div class="vyre-nav-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </div>
+          <div class="vyre-nav-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+          </div>
+          <div class="vyre-nav-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        </nav>
+
+        <!-- Floating Action Button -->
+        <button id="fab-create" class="vyre-fab disabled" title="Sign in to post">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2.5"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+
+        <!-- Debug Panel (Dev Only) -->
+        <div
+          id="debug-panel"
+          class="hidden absolute inset-0 overflow-y-auto p-6"
+          style="
+            background: rgba(8, 12, 21, 0.96);
+            backdrop-filter: blur(20px);
+            z-index: var(--z-modal);
+          "
+        >
+          <div class="max-w-[600px] mx-auto">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-sm font-bold text-white font-mono tracking-wider">/debug</h3>
+              <button id="debug-close-btn" class="vyre-btn-ghost">Close</button>
+            </div>
+            <div id="debug-content" class="space-y-3">
+              <div class="text-xs font-mono animate-pulse" style="color: var(--c-text-muted)">
+                Running checks...
+              </div>
+            </div>
+            <div class="mt-6 pt-4" style="border-top: 1px solid var(--c-border)">
+              <h4
+                class="text-[10px] font-mono uppercase tracking-widest mb-3"
+                style="color: var(--c-text-muted)"
+              >
+                Expected DB Objects
+              </h4>
+              <div class="text-[11px] font-mono space-y-1" style="color: var(--c-text-muted)">
+                <p>
+                  Table: <span style="color: var(--c-text)">posts</span> (id, author_id, content,
+                  created_at)
+                </p>
+                <p>
+                  Table: <span style="color: var(--c-text)">profiles</span> (id, username,
+                  avatar_url, display_name)
+                </p>
+                <p>
+                  Table: <span style="color: var(--c-text)">post_images</span> (id, post_id,
+                  image_url)
+                </p>
+                <p>Table: <span style="color: var(--c-text)">likes</span> (user_id, post_id)</p>
+                <p>
+                  Table: <span style="color: var(--c-text)">comments</span> (post_id, author_id,
+                  content)
+                </p>
+                <p>Bucket: <span style="color: var(--c-text)">post_images</span> (public)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Comments Drawer (Fixed to Viewport) -->
+      <div
+        id="comments-drawer"
+        class="fixed inset-0 pointer-events-none flex justify-end xl:absolute xl:inset-0 xl:overflow-hidden"
+        style="z-index: var(--z-drawer)"
+      >
+        <!-- Backdrop -->
+        <div
+          id="comments-backdrop"
+          class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none"
+        ></div>
+
+        <!-- Drawer Content -->
+        <div
+          id="comments-panel"
+          class="relative w-full max-w-md h-[80vh] mt-auto sm:h-full sm:mt-0 bg-[var(--vyre-surface)] border-t sm:border-t-0 sm:border-l border-[var(--vyre-border)] shadow-2xl flex flex-col transform translate-y-full sm:translate-y-0 sm:translate-x-full transition-transform duration-300 pointer-events-auto"
+        >
+          <!-- Header -->
+          <div
+            class="flex items-center justify-between px-6 py-4 border-b border-[var(--vyre-border)] bg-[rgba(10,17,29,0.65)] backdrop-blur-md"
+          >
+            <h3 class="font-semibold text-white tracking-wide">Comments</h3>
+            <button
+              id="comments-close-btn"
+              class="p-2 -mr-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Comments List -->
+          <div id="comments-list" class="flex-1 overflow-y-auto p-2">
+            <!-- Comments injected here -->
+          </div>
+
+          <!-- Comment Composer -->
+          <div class="p-4 border-t border-[var(--vyre-border)] bg-[var(--vyre-bg)]">
+            <div class="flex gap-3">
+              <textarea
+                id="comment-input"
+                class="flex-1 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--vyre-primary)] focus:ring-1 focus:ring-[var(--vyre-primary)] resize-none"
+                rows="1"
+                placeholder="Add a comment..."
+              ></textarea>
+              <button
+                id="comment-submit-btn"
+                class="vyre-btn-primary-sm self-end shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Post
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Comments Drawer (Fixed to Viewport) -->
-    <div id="comments-drawer"
-      class="fixed inset-0 pointer-events-none flex justify-end xl:absolute xl:inset-0 xl:overflow-hidden"
-      style="z-index: var(--z-drawer);">
-      <!-- Backdrop -->
-      <div id="comments-backdrop"
-        class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none">
-      </div>
-
-      <!-- Drawer Content -->
-      <div id="comments-panel"
-        class="relative w-full max-w-md h-[80vh] mt-auto sm:h-full sm:mt-0 bg-[var(--vyre-surface)] border-t sm:border-t-0 sm:border-l border-[var(--vyre-border)] shadow-2xl flex flex-col transform translate-y-full sm:translate-y-0 sm:translate-x-full transition-transform duration-300 pointer-events-auto">
-        <!-- Header -->
-        <div
-          class="flex items-center justify-between px-6 py-4 border-b border-[var(--vyre-border)] bg-[rgba(10,17,29,0.65)] backdrop-blur-md">
-          <h3 class="font-semibold text-white tracking-wide">Comments</h3>
-          <button id="comments-close-btn" class="p-2 -mr-2 text-gray-400 hover:text-white transition-colors">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Comments List -->
-        <div id="comments-list" class="flex-1 overflow-y-auto p-2">
-          <!-- Comments injected here -->
-        </div>
-
-        <!-- Comment Composer -->
-        <div class="p-4 border-t border-[var(--vyre-border)] bg-[var(--vyre-bg)]">
-          <div class="flex gap-3">
-            <textarea id="comment-input"
-              class="flex-1 bg-[var(--vyre-surface)] border border-[var(--vyre-border-light)] rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[var(--vyre-primary)] focus:ring-1 focus:ring-[var(--vyre-primary)] resize-none"
-              rows="1" placeholder="Add a comment..."></textarea>
-            <button id="comment-submit-btn"
-              class="vyre-btn-primary-sm self-end shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">Post</button>
-          </div>
-        </div>
-      </div>
+      <!-- Global Toast Container -->
+      <div
+        id="toast-container"
+        class="fixed bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none w-full max-w-[90vw] sm:max-w-md transition-all duration-300"
+        style="z-index: var(--z-toast)"
+      ></div>
     </div>
-
-    <!-- Global Toast Container -->
-    <div id="toast-container"
-      class="fixed bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none w-full max-w-[90vw] sm:max-w-md transition-all duration-300"
-      style="z-index: var(--z-toast);"></div>
-    style="z-index: var(--z-toast);">
-  </div>
-  </div>
-  <script type="module" src="/src/main.ts"></script>
-</body>
-
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

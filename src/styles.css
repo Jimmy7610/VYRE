@@ -27,7 +27,7 @@
   /* Brand / Accent */
   --vyre-primary: #3b82f6;
   --vyre-primary-hover: #60a5fa;
-  --vyre-accent: #FF4A00;
+  --vyre-accent: #ff4a00;
 
   /* Semantic */
   --vyre-heart: #f43f5e;
@@ -81,15 +81,21 @@
 @layer base {
   body {
     background:
-      radial-gradient(ellipse at 50% 25%,
+      radial-gradient(
+        ellipse at 50% 25%,
         rgba(40, 70, 120, 0.55) 0%,
         rgba(15, 25, 45, 0.25) 40%,
-        rgba(11, 18, 32, 0) 70%),
+        rgba(11, 18, 32, 0) 70%
+      ),
       radial-gradient(ellipse at 50% 120%, rgba(15, 30, 55, 0.3) 0%, rgba(10, 17, 29, 0) 60%),
       linear-gradient(180deg, #0a111d 0%, #080e19 100%);
     background-attachment: fixed;
     color: var(--vyre-text);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family:
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -130,7 +136,9 @@
   padding: 14px 16px;
   font-size: var(--fs-base);
   color: var(--vyre-text);
-  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+  transition:
+    border-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
 }
 
 #auth-screen input::placeholder {
@@ -153,7 +161,7 @@
 
 /* Feed column glow — subtle light focus */
 #main-app::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: -80px;
   background: radial-gradient(circle at center, rgba(30, 60, 110, 0.25), transparent 70%);
@@ -416,13 +424,12 @@
   margin: var(--sp-md) var(--sp-md);
   padding: var(--sp-xl);
   background:
-    linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.03),
-      rgba(255, 255, 255, 0) 20%),
-    #0f1c2e;
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 20%), #0f1c2e;
   border: none;
   border-radius: var(--r-md);
-  transition: background var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+  transition:
+    background var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04),
     0 12px 30px rgba(0, 0, 0, 0.45);
@@ -434,9 +441,7 @@
 
 .vyre-post:hover {
   background:
-    linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.04),
-      rgba(255, 255, 255, 0) 25%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 25%),
     var(--vyre-card);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06),
@@ -636,14 +641,18 @@
   cursor: pointer;
   z-index: 45;
   border: none;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25), 0 0 30px rgba(59, 130, 246, 0.06);
+  box-shadow:
+    0 4px 16px rgba(59, 130, 246, 0.25),
+    0 0 30px rgba(59, 130, 246, 0.06);
   transition: all var(--duration) var(--ease);
   opacity: 0.9;
 }
 
 .vyre-fab:hover {
   transform: translateX(-50%) scale(1.06) translateY(-2px);
-  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1);
+  box-shadow:
+    0 6px 24px rgba(59, 130, 246, 0.35),
+    0 0 40px rgba(59, 130, 246, 0.1);
   background: var(--vyre-primary-hover);
   opacity: 1;
 }
