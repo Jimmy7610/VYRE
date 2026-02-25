@@ -20,7 +20,7 @@
   /* Text */
   --vyre-text: #e2e8f0;
   --vyre-text-secondary: #94a3b8;
-  --vyre-muted: #576378;
+  --vyre-muted: #4e5d72;
 
   /* Brand / Accent */
   --vyre-primary: #3b82f6;
@@ -41,6 +41,7 @@
   --sp-lg: 16px;
   --sp-xl: 20px;
   --sp-2xl: 24px;
+  --sp-3xl: 32px;
 
   /* Radius */
   --r-sm: 8px;
@@ -59,7 +60,12 @@
 
   /* Transitions */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration: 200ms;
+  --duration: 180ms;
+
+  /* Line heights */
+  --lh-tight: 1.35;
+  --lh-normal: 1.55;
+  --lh-relaxed: 1.65;
 }
 
 @layer base {
@@ -297,9 +303,10 @@
    COMPOSER
    ============================================================ */
 .vyre-composer {
-  padding: var(--sp-lg);
+  padding: var(--sp-xl);
   border-bottom: 1px solid var(--vyre-border);
   background: var(--vyre-surface);
+  margin-bottom: var(--sp-sm);
 }
 
 .vyre-composer-inner {
@@ -326,7 +333,7 @@
   background: transparent;
   color: var(--vyre-text);
   font-size: var(--fs-md);
-  line-height: 1.5;
+  line-height: var(--lh-normal);
   resize: none;
   border: none;
   outline: none;
@@ -374,21 +381,22 @@
    POST CARDS — Soft surface containers
    ============================================================ */
 .vyre-post {
-  margin: var(--sp-sm) var(--sp-md);
-  padding: var(--sp-lg);
+  margin: var(--sp-md) var(--sp-md);
+  padding: var(--sp-xl);
   background: var(--vyre-surface);
   border: 1px solid var(--vyre-border);
   border-radius: var(--r-md);
-  transition: all var(--duration) var(--ease);
+  transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
 }
 
 .vyre-post:first-of-type {
-  margin-top: var(--sp-md);
+  margin-top: var(--sp-lg);
 }
 
 .vyre-post:hover {
   background: var(--vyre-card);
   border-color: var(--vyre-border-light);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .vyre-post-inner {
@@ -419,23 +427,25 @@
 
 .vyre-post-username {
   font-size: var(--fs-base);
-  font-weight: 700;
+  font-weight: 800;
   color: white;
+  letter-spacing: -0.01em;
 }
 
 .vyre-post-time {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-2xs);
   color: var(--vyre-muted);
   margin-left: auto;
+  opacity: 0.85;
 }
 
 .vyre-post-content {
   font-size: var(--fs-md);
-  line-height: 1.55;
+  line-height: var(--lh-relaxed);
   color: var(--vyre-text);
   white-space: pre-wrap;
   word-break: break-word;
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
 .vyre-post-image {
@@ -457,8 +467,8 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2xl);
-  margin-top: var(--sp-md);
-  padding-top: var(--sp-sm);
+  margin-top: var(--sp-lg);
+  padding-top: var(--sp-md);
 }
 
 .vyre-action-btn {
@@ -560,12 +570,11 @@
    ============================================================ */
 .vyre-fab {
   position: fixed;
-  bottom: 76px;
-  /* above bottom nav */
+  bottom: 84px;
   left: 50%;
   transform: translateX(-50%);
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: var(--r-full);
   background: var(--vyre-primary);
   color: white;
@@ -575,22 +584,24 @@
   cursor: pointer;
   z-index: 45;
   border: none;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25), 0 0 30px rgba(59, 130, 246, 0.06);
   transition: all var(--duration) var(--ease);
+  opacity: 0.9;
 }
 
 .vyre-fab:hover {
-  transform: translateX(-50%) scale(1.08) translateY(-2px);
-  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.45), 0 0 60px rgba(59, 130, 246, 0.15);
+  transform: translateX(-50%) scale(1.06) translateY(-2px);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1);
   background: var(--vyre-primary-hover);
+  opacity: 1;
 }
 
 .vyre-fab:active {
-  transform: translateX(-50%) scale(0.95);
+  transform: translateX(-50%) scale(0.96);
 }
 
 .vyre-fab.disabled {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -599,11 +610,12 @@
   transform: translateX(-50%);
   box-shadow: none;
   background: var(--vyre-primary);
+  opacity: 0.2;
 }
 
 .vyre-fab svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   stroke-width: 2.5;
 }
 
