@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus, fetchUserLikes, toggleLike, fetchComments, submitComment, Comment, fetchSinglePost } from '../api/feed';
+import { fetchProfileByUsername, fetchProfilePosts, updateProfile, uploadAvatar, Profile } from '../api/profile';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -9,7 +10,32 @@ const betaAccessContainer = document.getElementById('beta-access-container');
 const betaAccessBtn = document.getElementById('beta-access-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const feedContainer = document.getElementById('feed-container');
+const profileView = document.getElementById('profile-view');
+const settingsView = document.getElementById('settings-view');
 const loadingSpinner = document.getElementById('loading-spinner');
+
+// Profile View Elements
+const profileBackBtn = document.getElementById('profile-back-btn');
+const profileHeaderTitle = document.getElementById('profile-header-title');
+const profileAvatarLarge = document.getElementById('profile-avatar-large');
+const profileDisplayName = document.getElementById('profile-display-name');
+const profileUsernameEl = document.getElementById('profile-username');
+const profileBio = document.getElementById('profile-bio');
+const profileStatPosts = document.getElementById('profile-stat-posts');
+const profileStatLikes = document.getElementById('profile-stat-likes');
+const profileLoading = document.getElementById('profile-loading');
+const profileFeedList = document.getElementById('profile-feed-list');
+
+// Settings View Elements
+const settingsAvatarWrapper = document.getElementById('settings-avatar-wrapper');
+const settingsAvatarPreview = document.getElementById('settings-avatar-preview');
+const settingsAvatarInput = document.getElementById('settings-avatar-input') as HTMLInputElement;
+const settingsDisplayName = document.getElementById('settings-display-name') as HTMLInputElement;
+const settingsUsername = document.getElementById('settings-username') as HTMLInputElement;
+const settingsBio = document.getElementById('settings-bio') as HTMLTextAreaElement;
+const settingsSaveBtn = document.getElementById('settings-save-btn') as HTMLButtonElement;
+const settingsSaveText = document.getElementById('settings-save-text');
+const settingsSaveSpinner = document.getElementById('settings-save-spinner');
 
 // Auth Form Elements
 const authForm = document.getElementById('auth-form') as HTMLFormElement;
@@ -21,6 +47,10 @@ const btnSignup = document.getElementById('btn-signup');
 
 // Header Elements
 const userHandle = document.getElementById('user-handle-initial');
+const userMenuBtn = document.getElementById('user-menu-btn');
+const userDropdownMenu = document.getElementById('user-dropdown-menu');
+const menuMyProfileBtn = document.getElementById('menu-my-profile-btn');
+const menuSettingsBtn = document.getElementById('menu-settings-btn');
 const userHandleIcon = document.getElementById('user-handle-icon');
 const betaBar = document.getElementById('beta-bar');
 const betaRefreshBtn = document.getElementById('beta-refresh-btn');
@@ -86,11 +116,26 @@ function handleAuthChange(session: any) {
 
   if (currentUser) {
     if (userHandle) {
-      const emailPrefix = currentUser.email?.split('@')[0] || 'User';
-      userHandle.textContent = emailPrefix.charAt(0).toUpperCase();
+      // Optimistic set based on email/meta
+      const handleStr = currentUser.user_metadata?.username || currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || 'U';
+      userHandle.textContent = handleStr.charAt(0).toUpperCase();
       userHandle.classList.remove('hidden');
       userHandleIcon?.classList.add('hidden');
-      if (composeAvatarInitial) composeAvatarInitial.textContent = emailPrefix.charAt(0).toUpperCase();
+      if (composeAvatarInitial) composeAvatarInitial.textContent = handleStr.charAt(0).toUpperCase();
+
+      // Fetch actual profile to check for avatar
+      supabase?.from('profiles').select('avatar_url').eq('id', currentUser.id).single()
+        .then(({ data }) => {
+          if (data?.avatar_url) {
+            const btn = document.getElementById('user-menu-btn');
+            if (btn) {
+              btn.innerHTML = `<img src="${data.avatar_url}" class="w-full h-full object-cover">`;
+              if (composeAvatarInitial && composeAvatarInitial.parentElement) {
+                composeAvatarInitial.parentElement.innerHTML = `<img src="${data.avatar_url}" class="w-full h-full object-cover rounded-full">`;
+              }
+            }
+          }
+        });
     }
     betaBar?.classList.add('hidden');
 
@@ -143,6 +188,122 @@ function showAuth() {
     }
   }
 }
+
+// === ROUTING ===
+function showFeed() {
+  if (feedContainer) {
+    feedContainer.classList.remove('hidden');
+    feedContainer.classList.add('flex');
+  }
+  if (profileView) {
+    profileView.classList.add('hidden');
+    profileView.classList.remove('flex');
+  }
+  if (settingsView) {
+    settingsView.classList.add('hidden');
+    settingsView.classList.remove('flex');
+  }
+  if (composeContainer && (currentUser || inBetaSession)) {
+    composeContainer.classList.remove('hidden');
+  }
+}
+
+function showProfileView() {
+  if (feedContainer) {
+    feedContainer.classList.add('hidden');
+    feedContainer.classList.remove('flex');
+  }
+  if (settingsView) {
+    settingsView.classList.add('hidden');
+    settingsView.classList.remove('flex');
+  }
+  if (profileView) {
+    profileView.classList.remove('hidden');
+    profileView.classList.add('flex');
+    profileView.scrollTop = 0;
+  }
+  if (composeContainer) {
+    composeContainer.classList.add('hidden');
+  }
+}
+
+function showSettingsView() {
+  if (feedContainer) {
+    feedContainer.classList.add('hidden');
+    feedContainer.classList.remove('flex');
+  }
+  if (profileView) {
+    profileView.classList.add('hidden');
+    profileView.classList.remove('flex');
+  }
+  if (settingsView) {
+    settingsView.classList.remove('hidden');
+    settingsView.classList.add('flex');
+  }
+  if (composeContainer) {
+    composeContainer.classList.add('hidden');
+  }
+}
+
+// === HEADER & DROP DOWN ===
+
+userMenuBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (userDropdownMenu?.classList.contains('hidden')) {
+    userDropdownMenu.classList.remove('hidden');
+    // slight delay for transition
+    requestAnimationFrame(() => {
+      userDropdownMenu.classList.remove('opacity-0', 'scale-95');
+    });
+  } else {
+    closeUserMenu();
+  }
+});
+
+function closeUserMenu() {
+  if (!userDropdownMenu || userDropdownMenu.classList.contains('hidden')) return;
+  userDropdownMenu.classList.add('opacity-0', 'scale-95');
+  setTimeout(() => {
+    userDropdownMenu.classList.add('hidden');
+  }, 200);
+}
+
+document.addEventListener('click', () => {
+  closeUserMenu();
+});
+
+menuMyProfileBtn?.addEventListener('click', () => {
+  closeUserMenu();
+  if (currentUser?.user_metadata?.username) {
+    loadProfile(currentUser.user_metadata.username);
+  } else if (currentUser) {
+    // fallback if username not in metadata
+    // try fetching from profile via ID
+    supabase?.from('profiles').select('username').eq('id', currentUser.id).single()
+      .then(({ data }) => {
+        if (data?.username) loadProfile(data.username);
+      });
+  } else {
+    showToast('Sign in to view your profile');
+  }
+});
+
+menuSettingsBtn?.addEventListener('click', () => {
+  closeUserMenu();
+  loadSettings();
+});
+
+
+// Bottom Nav Routing (rudimentary)
+
+profileBackBtn?.addEventListener('click', () => {
+  showFeed();
+});
+
+// Settings Back
+document.getElementById('settings-back-btn')?.addEventListener('click', () => {
+  showFeed();
+});
 
 // Handle Beta Access Login
 betaAccessBtn?.addEventListener('click', () => {
@@ -472,6 +633,221 @@ function setupRealtimeSubscriptions() {
     })
     .subscribe();
 }
+
+// === PUBLIC PROFILE ===
+async function loadProfile(username: string) {
+  // Show base view
+  showProfileView();
+
+  if (!profileHeaderTitle || !profileAvatarLarge || !profileDisplayName || !profileUsernameEl || !profileBio || !profileStatPosts || !profileStatLikes || !profileLoading || !profileFeedList) return;
+
+  // Reset / loading state
+  profileHeaderTitle.textContent = username;
+  profileDisplayName.textContent = '...';
+  profileUsernameEl.textContent = `@${username}`;
+  profileBio.textContent = '';
+  profileStatPosts.textContent = '-';
+  profileStatLikes.textContent = '-';
+  profileAvatarLarge.innerHTML = '';
+  profileFeedList.innerHTML = '';
+
+  profileLoading.classList.remove('hidden');
+
+  try {
+    const profile = await fetchProfileByUsername(username);
+    if (!profile) {
+      profileLoading.classList.add('hidden');
+      profileFeedList.innerHTML = `<div class="p-8 text-center text-gray-500 font-mono">User not found.</div>`;
+      return;
+    }
+
+    // Populate header
+    profileDisplayName.textContent = profile.displayName;
+    profileUsernameEl.textContent = `@${profile.username}`;
+    profileBio.textContent = profile.bio || '';
+    profileStatPosts.textContent = profile.stats.posts.toString();
+    profileStatLikes.textContent = profile.stats.likesReceived.toString();
+
+    if (profile.avatarUrl) {
+      profileAvatarLarge.innerHTML = `<img src="${profile.avatarUrl}" alt="${profile.username}" class="w-full h-full object-cover">`;
+    } else {
+      profileAvatarLarge.textContent = profile.username.charAt(0).toUpperCase();
+    }
+
+    // Fetch posts
+    const posts = await fetchProfilePosts(profile.id, currentUser?.id);
+    profileLoading.classList.add('hidden');
+
+    if (posts.length === 0) {
+      profileFeedList.innerHTML = `<div class="p-8 text-center text-gray-500 font-mono">No posts yet.</div>`;
+    } else {
+      // Re-use rendering
+      posts.forEach(post => {
+        const postEl = createPostElement(post);
+        // Special case: we don't necessarily want profile links clickable if we're ALREADY on the profile page
+        // But for MVP, keeping them clickable is fine (just re-renders same page).
+        profileFeedList.appendChild(postEl);
+      });
+    }
+
+  } catch (err) {
+    console.error('Failed to load profile:', err);
+    profileLoading.classList.add('hidden');
+    profileFeedList.innerHTML = `<div class="p-8 text-center text-red-500 font-mono">Error loading profile.</div>`;
+  }
+}
+
+// === SETTINGS VIEW ===
+let settingsAvatarFile: File | null = null;
+let currentProfileData: Profile | null = null;
+
+async function loadSettings() {
+  if (!currentUser) {
+    showToast('You must be signed in to edit your profile.', 'error');
+    return;
+  }
+  showSettingsView();
+
+  if (settingsDisplayName && settingsUsername && settingsBio && settingsAvatarPreview) {
+    // Clear / reset
+    settingsDisplayName.value = '...';
+    settingsUsername.value = '...';
+    settingsBio.value = '';
+    settingsAvatarPreview.innerHTML = '<div class="vyre-spinner"></div>';
+    settingsAvatarFile = null;
+    settingsSaveBtn.disabled = true;
+
+    // Fetch own profile
+    try {
+      // Just fetch basic info by ID
+      const { data, error } = await supabase!.from('profiles').select('*').eq('id', currentUser.id).single();
+      if (error) throw error;
+
+      currentProfileData = data as Profile;
+
+      settingsDisplayName.value = data.display_name || '';
+      settingsUsername.value = data.username || '';
+      settingsBio.value = data.bio || '';
+
+      if (data.avatar_url) {
+        settingsAvatarPreview.innerHTML = `<img src="${data.avatar_url}" class="w-full h-full object-cover">`;
+      } else {
+        settingsAvatarPreview.innerHTML = data.username.charAt(0).toUpperCase();
+      }
+
+      settingsSaveBtn.disabled = false;
+
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+      showToast('Error loading profile settings.', 'error');
+    }
+  }
+}
+
+settingsAvatarWrapper?.addEventListener('click', (e) => {
+  if (inBetaSession && !currentUser) {
+    e.preventDefault();
+    showToast('Read-only beta: Avatar upload disabled', 'error');
+    return;
+  }
+  settingsAvatarInput?.click();
+});
+
+settingsAvatarInput?.addEventListener('change', (e) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Avatar must be less than 5MB', 'error');
+    return;
+  }
+
+  const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    showToast('Only JPG, PNG, or WEBP allowed', 'error');
+    return;
+  }
+
+  settingsAvatarFile = file;
+
+  if (settingsAvatarPreview) {
+    settingsAvatarPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="w-full h-full object-cover">`;
+  }
+});
+
+// Settings Inputs Beta Gates
+[settingsDisplayName, settingsUsername, settingsBio].forEach(input => {
+  input?.addEventListener('focus', () => {
+    if (inBetaSession && !currentUser) {
+      input.blur();
+      showToast('Read-only beta: Editing disabled', 'error');
+    }
+  });
+});
+
+settingsSaveBtn?.addEventListener('click', async () => {
+  if (inBetaSession && !currentUser) {
+    showToast('Read-only beta: Saving disabled', 'error');
+    return;
+  }
+  if (!currentUser || !currentProfileData) return;
+
+  const dName = settingsDisplayName.value.trim();
+  const uName = settingsUsername.value.trim().toLowerCase();
+  const bio = settingsBio.value.trim();
+
+  // Basic validation
+  if (dName.length < 2 || dName.length > 30) {
+    showToast('Display name must be 2-30 characters', 'error');
+    return;
+  }
+  if (!/^[a-z0-9_]{3,20}$/.test(uName)) {
+    showToast('Username must be 3-20 characters: letters, numbers, underscores', 'error');
+    return;
+  }
+  if (bio.length > 240) {
+    showToast('Bio must be less than 240 characters', 'error');
+    return;
+  }
+
+  // Loading state
+  settingsSaveBtn.disabled = true;
+  settingsSaveText?.classList.add('opacity-0');
+  settingsSaveSpinner?.classList.remove('hidden');
+
+  try {
+    let newAvatarUrl = currentProfileData.avatarUrl;
+
+    if (settingsAvatarFile) {
+      newAvatarUrl = await uploadAvatar(settingsAvatarFile);
+    }
+
+    await updateProfile(currentUser.id, {
+      username: uName,
+      displayName: dName,
+      bio: bio,
+      avatarUrl: newAvatarUrl
+    });
+
+    showToast('Profile updated successfully!', 'success');
+
+    // Update local meta
+    if (currentUser.user_metadata) {
+      currentUser.user_metadata.username = uName;
+    }
+
+    // Auto-return to profile
+    loadProfile(uName);
+
+  } catch (err: any) {
+    console.error('Settings save err:', err);
+    showToast(err.userMessage || 'Failed to update profile', 'error');
+  } finally {
+    settingsSaveBtn.disabled = false;
+    settingsSaveText?.classList.remove('opacity-0');
+    settingsSaveSpinner?.classList.add('hidden');
+  }
+});
 
 function createEmptyState(): HTMLElement {
   const div = document.createElement('div');
