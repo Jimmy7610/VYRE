@@ -9,7 +9,7 @@ import {
   submitComment,
   fetchSinglePost,
   createPost,
-  uploadImage
+  uploadImage,
 } from './api/feed';
 
 import {
@@ -497,7 +497,7 @@ composeBtn?.addEventListener('click', async () => {
     // 2. Upload Image if exists
     let imageUrl = undefined;
     if (currentImageFile) {
-      imageUrl = await uploadImage(currentImageFile);
+      imageUrl = await uploadImage(currentImageFile, currentUser.id);
     }
 
     // 3. Create Post
@@ -534,16 +534,31 @@ composeBtn?.addEventListener('click', async () => {
 });
 
 // Render Feed
-async function loadFeed() {
+let currentFeedCursor: string | null = null;
+let hasMoreFeed = true;
+const FEED_LIMIT = 20;
+
+async function loadFeed(isLoadMore = false) {
   if (!feedContainer || !loadingSpinner) return;
 
-  loadingSpinner.classList.remove('hidden');
+  if (!isLoadMore) {
+    currentFeedCursor = null;
+    hasMoreFeed = true;
+    feedContainer.innerHTML = '';
+    loadingSpinner.classList.remove('hidden');
+  } else {
+    const btn = document.getElementById('vyre-load-more-btn');
+    if (btn) btn.textContent = 'Loading...';
+  }
 
   try {
-    const response = await getGlobalFeed();
+    const response = await getGlobalFeed({
+      limit: FEED_LIMIT,
+      cursor: currentFeedCursor || undefined,
+    });
 
     // Fetch user likes if logged in
-    if (currentUser) {
+    if (currentUser && response.data.length > 0) {
       const postIds = response.data.map((p) => p.id);
       const likedPostIds = await fetchUserLikes(postIds, currentUser.id);
       response.data.forEach((p) => {
@@ -553,7 +568,7 @@ async function loadFeed() {
 
     loadingSpinner.classList.add('hidden');
 
-    if (response.data.length === 0) {
+    if (response.data.length === 0 && !isLoadMore) {
       feedContainer.appendChild(createEmptyState());
       return;
     }
@@ -562,6 +577,27 @@ async function loadFeed() {
       const postEl = createPostElement(post);
       feedContainer.appendChild(postEl);
     });
+
+    if (response.data.length < FEED_LIMIT) {
+      hasMoreFeed = false;
+    } else {
+      currentFeedCursor = response.data[response.data.length - 1].createdAt;
+    }
+
+    const oldBtn = document.getElementById('vyre-load-more-btn-container');
+    if (oldBtn) oldBtn.remove();
+
+    if (hasMoreFeed) {
+      const btnContainer = document.createElement('div');
+      btnContainer.id = 'vyre-load-more-btn-container';
+      btnContainer.className = 'w-full p-4 flex justify-center mt-4';
+      btnContainer.innerHTML = `<button id="vyre-load-more-btn" class="vyre-btn-secondary text-sm px-6 py-2">Load More</button>`;
+      feedContainer.appendChild(btnContainer);
+
+      document.getElementById('vyre-load-more-btn')?.addEventListener('click', () => {
+        loadFeed(true);
+      });
+    }
 
     setupRealtimeSubscriptions();
   } catch (error: any) {
@@ -572,8 +608,9 @@ async function loadFeed() {
     errorEl.className = 'p-6 text-center font-mono';
     errorEl.innerHTML = `
       <p class="text-red-500 text-sm mb-2">${devErr.userMessage || 'Failed to load signal'}</p>
-      ${devErr.details
-        ? `
+      ${
+        devErr.details
+          ? `
         <details class="text-left bg-gray-900 border border-gray-800 rounded-sm p-3 mt-2">
           <summary class="text-gray-500 text-[10px] cursor-pointer hover:text-gray-300 transition-colors">Dev details</summary>
           <div class="mt-2 text-[11px] text-gray-400 space-y-1">
@@ -581,7 +618,7 @@ async function loadFeed() {
             <p><span class="text-gray-600">Message:</span> ${devErr.details}</p>
           </div>
         </details>`
-        : ''
+          : ''
       }
     `;
     feedContainer.appendChild(errorEl);
@@ -1288,14 +1325,14 @@ async function openDebugPanel() {
     debugContent.innerHTML = `
       <div class="space-y-2">
         ${Object.entries(status)
-        .map(
-          ([key, val]) => `
+          .map(
+            ([key, val]) => `
           <div class="flex items-start gap-3 bg-gray-900/50 border border-gray-800 rounded-sm p-3">
             <span class="text-[10px] text-gray-600 font-mono uppercase w-16 shrink-0 pt-0.5">${key}</span>
             <span class="text-[11px] font-mono ${val.startsWith('✅') ? 'text-green-500' : val.startsWith('⚠') ? 'text-yellow-500' : 'text-red-400'}">${val}</span>
           </div>`
-        )
-        .join('')}
+          )
+          .join('')}
       </div>
     `;
   } catch (err: any) {

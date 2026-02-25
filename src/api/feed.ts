@@ -38,19 +38,30 @@ function getDemoFeed(): Post[] {
   ];
 }
 
-export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
+export const getGlobalFeed = async (options?: {
+  limit?: number;
+  cursor?: string;
+}): Promise<{ data: Post[] }> => {
+  const limit = options?.limit || 20;
+
   if (!supabase) {
     console.warn('VYRE: No Supabase client. Returning demo feed.');
     return { data: getDemoFeed() };
   }
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('posts')
       .select(
         'id, content, created_at, profiles(username, avatar_url), post_images(image_url), likes(count), comments(count)'
       )
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
+
+    if (options?.cursor) {
+      query = query.lt('created_at', options.cursor);
+    }
+
+    const { data, error } = await query.limit(limit);
 
     if (error) {
       console.error('VYRE Supabase Error:', error.message);
@@ -164,12 +175,12 @@ export const createPost = async (
   }
 };
 
-export const uploadImage = async (file: File): Promise<string> => {
+export const uploadImage = async (file: File, authorId: string): Promise<string> => {
   if (!supabase) throw new Error('Supabase not configured');
   try {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `public/${fileName}`;
+    const filePath = `${authorId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('post_images')
