@@ -2,6 +2,12 @@ import { supabase } from '../src/lib/supabase';
 
 // Global Feed API
 
+export interface SupabaseDevError {
+  userMessage: string;
+  code?: string;
+  details?: string;
+}
+
 export interface Post {
   id: string;
   author: {
@@ -52,12 +58,17 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
   try {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, image_url, likes, comments, created_at, profiles(username, avatar_url)')
+      .select('id, content, likes, comments, created_at, profiles(username, avatar_url), post_images(image_url)')
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('VYRE Supabase Error:', error.message);
-      throw error;
+      const devErr: SupabaseDevError = {
+        userMessage: 'Failed to load feed',
+        code: error.code,
+        details: error.message + (error.hint ? ` | Hint: ${error.hint}` : '')
+      };
+      throw devErr;
     }
 
     const posts: Post[] = (data || []).map((row: any) => ({
@@ -67,16 +78,17 @@ export const getGlobalFeed = async (): Promise<{ data: Post[] }> => {
         avatarUrl: row.profiles?.avatar_url
       },
       content: row.content,
-      imageUrl: row.image_url,
+      imageUrl: row.post_images?.[0]?.image_url || null,
       likes: row.likes || 0,
       comments: row.comments || 0,
       createdAt: row.created_at
     }));
 
     return { data: posts };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to get global feed:', err);
-    throw err;
+    if (err.userMessage) throw err; // Already structured
+    throw { userMessage: 'Failed to load feed', details: String(err?.message || err) } as SupabaseDevError;
   }
 };
 
@@ -93,7 +105,9 @@ export const createPost = async (content: string, authorId: string, imageUrl?: s
       .select('id')
       .single();
 
-    if (postError) throw postError;
+    if (postError) {
+      throw { userMessage: 'Failed to create post', code: postError.code, details: postError.message + (postError.hint ? ` | Hint: ${postError.hint}` : '') } as SupabaseDevError;
+    }
 
     // 2. Insert Image if provided
     if (imageUrl && postData?.id) {
@@ -106,15 +120,14 @@ export const createPost = async (content: string, authorId: string, imageUrl?: s
 
       if (imgError) {
         console.error('Failed to link image to post:', imgError.message);
-        // We still return true because the post succeeded, but the image link failed.
-        // In a strict environment we'd rollback.
       }
     }
 
     return postData.id;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to create post:', err);
-    throw err;
+    if (err.userMessage) throw err;
+    throw { userMessage: 'Failed to create post', details: String(err?.message || err) } as SupabaseDevError;
   }
 };
 
@@ -129,15 +142,49 @@ export const uploadImage = async (file: File): Promise<string> => {
       .from('post_images')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      throw { userMessage: 'Failed to upload image', code: (uploadError as any).statusCode, details: uploadError.message } as SupabaseDevError;
+    }
 
     const { data } = supabase.storage
       .from('post_images')
       .getPublicUrl(filePath);
 
     return data.publicUrl;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to upload image:', err);
-    throw err;
+    if (err.userMessage) throw err;
+    throw { userMessage: 'Failed to upload image', details: String(err?.message || err) } as SupabaseDevError;
   }
 };
+
+// Debug: Check DB schema status
+export async function checkSchemaStatus(): Promise<{ posts: string; profiles: string; bucket: string }> {
+  const result = { posts: '❌ Not found', profiles: '❌ Not found', bucket: '❌ Not found' };
+
+  if (!supabase) {
+    return { posts: '⚠️ No client', profiles: '⚠️ No client', bucket: '⚠️ No client' };
+  }
+
+  try {
+    const { count, error } = await supabase.from('posts').select('*', { count: 'exact', head: true });
+    result.posts = error ? `❌ ${error.code}: ${error.message}` : `✅ OK (${count ?? 0} rows)`;
+  } catch (e: any) { result.posts = `❌ ${e.message}`; }
+
+  try {
+    const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    result.profiles = error ? `❌ ${error.code}: ${error.message}` : `✅ OK (${count ?? 0} rows)`;
+  } catch (e: any) { result.profiles = `❌ ${e.message}`; }
+
+  try {
+    const { data, error } = await supabase.storage.listBuckets();
+    if (error) {
+      result.bucket = `❌ ${error.message}`;
+    } else {
+      const found = data?.find((b: any) => b.name === 'post_images');
+      result.bucket = found ? `✅ OK (public: ${found.public})` : '❌ Bucket "post_images" not found';
+    }
+  } catch (e: any) { result.bucket = `❌ ${e.message}`; }
+
+  return result;
+}

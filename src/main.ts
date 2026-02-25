@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { getGlobalFeed, Post } from '../api/feed';
+import { getGlobalFeed, Post, SupabaseDevError, checkSchemaStatus } from '../api/feed';
 import { supabase } from './lib/supabase';
 import './styles.css';
 
@@ -304,7 +304,10 @@ composeBtn?.addEventListener('click', async () => {
 
   } catch (err: any) {
     console.error('Post creation failed:', err);
-    if (composeError) composeError.textContent = 'Failed to broadcast signal. Try again.';
+    if (composeError) {
+      const devErr = err as SupabaseDevError;
+      composeError.innerHTML = `${devErr.userMessage || 'Post failed'}${devErr.details ? ` <details class="inline"><summary class="cursor-pointer text-gray-500 ml-1">[dev]</summary><span class="text-gray-500 block mt-1">${devErr.code ? devErr.code + ': ' : ''}${devErr.details}</span></details>` : ''}`;
+    }
   } finally {
     // Restore UI
     composeBtnText?.classList.remove('opacity-0');
@@ -336,12 +339,23 @@ async function loadFeed() {
       feedContainer.appendChild(postEl);
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to load feed:', error);
     loadingSpinner.classList.add('hidden');
+    const devErr = error as SupabaseDevError;
     const errorEl = document.createElement('div');
-    errorEl.className = 'p-4 text-center text-red-500 font-mono text-xs';
-    errorEl.textContent = 'Failed to load signal.';
+    errorEl.className = 'p-6 text-center font-mono';
+    errorEl.innerHTML = `
+      <p class="text-red-500 text-sm mb-2">${devErr.userMessage || 'Failed to load signal'}</p>
+      ${devErr.details ? `
+        <details class="text-left bg-gray-900 border border-gray-800 rounded-sm p-3 mt-2">
+          <summary class="text-gray-500 text-[10px] cursor-pointer hover:text-gray-300 transition-colors">Dev details</summary>
+          <div class="mt-2 text-[11px] text-gray-400 space-y-1">
+            ${devErr.code ? `<p><span class="text-gray-600">Code:</span> ${devErr.code}</p>` : ''}
+            <p><span class="text-gray-600">Message:</span> ${devErr.details}</p>
+          </div>
+        </details>` : ''}
+    `;
     feedContainer.appendChild(errorEl);
   }
 }
@@ -424,3 +438,45 @@ function createPostElement(post: Post): HTMLElement {
 
   return article;
 }
+
+// === DEBUG PANEL ===
+const debugPanel = document.getElementById('debug-panel');
+const debugCloseBtn = document.getElementById('debug-close-btn');
+const debugContent = document.getElementById('debug-content');
+
+async function openDebugPanel() {
+  if (!debugPanel || !debugContent) return;
+  debugPanel.classList.remove('hidden');
+  debugContent.innerHTML = '<div class="text-gray-500 text-xs font-mono animate-pulse">Running checks...</div>';
+
+  try {
+    const status = await checkSchemaStatus();
+    debugContent.innerHTML = `
+      <div class="space-y-2">
+        ${Object.entries(status).map(([key, val]) => `
+          <div class="flex items-start gap-3 bg-gray-900/50 border border-gray-800 rounded-sm p-3">
+            <span class="text-[10px] text-gray-600 font-mono uppercase w-16 shrink-0 pt-0.5">${key}</span>
+            <span class="text-[11px] font-mono ${val.startsWith('✅') ? 'text-green-500' : val.startsWith('⚠') ? 'text-yellow-500' : 'text-red-400'}">${val}</span>
+          </div>`).join('')}
+      </div>
+    `;
+  } catch (err: any) {
+    debugContent.innerHTML = `<p class="text-red-500 text-xs font-mono">Debug check failed: ${err.message}</p>`;
+  }
+}
+
+debugCloseBtn?.addEventListener('click', () => {
+  debugPanel?.classList.add('hidden');
+});
+
+// Keyboard shortcut: Ctrl+Shift+D opens debug panel
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+    e.preventDefault();
+    if (debugPanel?.classList.contains('hidden')) {
+      openDebugPanel();
+    } else {
+      debugPanel?.classList.add('hidden');
+    }
+  }
+});
