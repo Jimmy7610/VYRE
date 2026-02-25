@@ -20,7 +20,8 @@ const btnLogin = document.getElementById('btn-login');
 const btnSignup = document.getElementById('btn-signup');
 
 // Header Elements
-const userHandle = document.getElementById('user-handle');
+const userHandle = document.getElementById('user-handle-initial');
+const userHandleIcon = document.getElementById('user-handle-icon');
 const betaBar = document.getElementById('beta-bar');
 const betaRefreshBtn = document.getElementById('beta-refresh-btn');
 const betaSigninBtn = document.getElementById('beta-signin-btn');
@@ -85,28 +86,28 @@ function handleAuthChange(session: any) {
 
   if (currentUser) {
     if (userHandle) {
-      // For now, display email prefix as username since no profile editing yet
       const emailPrefix = currentUser.email?.split('@')[0] || 'User';
-      userHandle.textContent = `@${emailPrefix}`;
+      userHandle.textContent = emailPrefix.charAt(0).toUpperCase();
       userHandle.classList.remove('hidden');
+      userHandleIcon?.classList.add('hidden');
       if (composeAvatarInitial) composeAvatarInitial.textContent = emailPrefix.charAt(0).toUpperCase();
     }
     betaBar?.classList.add('hidden');
-    betaBar?.classList.remove('flex');
 
     // Enable Compose
     composeContainer?.classList.remove('hidden');
-    composeContainer?.classList.add('flex');
 
     showApp();
     loadFeed();
   } else {
     // If we're showing the app but no session exists, we must be in beta mode
     // (Or user just logged out)
-    if (userHandle) userHandle.classList.add('hidden');
+    if (userHandle) {
+      userHandle.classList.add('hidden');
+      userHandleIcon?.classList.remove('hidden');
+    }
     // Disable Compose
     composeContainer?.classList.add('hidden');
-    composeContainer?.classList.remove('flex');
     // Only redirect to auth screen if NOT in beta session
     if (mainApp && !mainApp.classList.contains('hidden') && !isBetaMode && !inBetaSession) {
       showAuth();
@@ -362,17 +363,16 @@ async function loadFeed() {
 
 function createEmptyState(): HTMLElement {
   const div = document.createElement('div');
-  div.className = 'flex flex-col items-center justify-center py-20 px-6 text-center';
+  div.className = 'vyre-empty-state';
   div.innerHTML = `
-    <div class="w-16 h-16 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mb-4">
-      <svg class="w-7 h-7 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+    <div class="vyre-post-avatar" style="width:56px; height:56px; font-size:24px; margin-bottom:16px;">
+      <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:var(--c-text-muted);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
     </div>
-    <h3 class="text-gray-300 font-semibold text-sm mb-1">No posts yet</h3>
-    <p class="text-gray-600 text-xs font-mono mb-4">Sign in to create the first post.</p>
-    <button id="empty-signin-btn" class="px-4 py-2 text-[11px] font-mono text-black bg-gray-100 rounded-sm hover:bg-white transition-colors font-semibold">Sign in</button>
+    <h3 style="color:var(--c-text); font-weight:600; font-size:var(--fs-md); margin-bottom:4px;">No posts yet</h3>
+    <p style="color:var(--c-text-muted); font-size:var(--fs-sm); margin-bottom:16px;">Be the first to share something.</p>
+    <button id="empty-signin-btn" class="vyre-btn-primary-sm" style="padding:8px 20px;">Sign in</button>
   `;
 
-  // Wire up the Sign In button inside the empty state
   setTimeout(() => {
     document.getElementById('empty-signin-btn')?.addEventListener('click', () => {
       inBetaSession = false;
@@ -383,55 +383,58 @@ function createEmptyState(): HTMLElement {
   return div;
 }
 
+function getRelativeTime(date: Date): string {
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d ago`;
+}
+
 function createPostElement(post: Post): HTMLElement {
   const article = document.createElement('article');
-  article.className = 'w-full border-b border-gray-900 p-4 hover:bg-gray-900/20 transition-colors pt-5';
+  article.className = 'vyre-post';
 
-  const time = new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const relTime = getRelativeTime(new Date(post.createdAt));
+  const initial = post.author.username.charAt(0).toUpperCase();
 
   let imageHtml = '';
   if (post.imageUrl) {
     imageHtml = `
-      <div class="mt-3 w-full rounded-sm overflow-hidden border border-gray-800 bg-gray-900 aspect-video relative">
-        <img src="${post.imageUrl}" alt="Post media" class="w-full h-full object-cover opacity-80 mix-blend-luminosity hover:mix-blend-normal transition-all duration-500 cursor-pointer" loading="lazy" />
+      <div class="vyre-post-image">
+        <img src="${post.imageUrl}" alt="Post media" loading="lazy" />
       </div>
     `;
   }
 
   article.innerHTML = `
-    <div class="flex gap-3">
-      <!-- Avatar Placeholder -->
-      <div class="w-10 h-10 rounded-sm bg-gray-800 flex-shrink-0 flex items-center justify-center border border-gray-700">
-        <span class="text-xs font-mono text-gray-400">${post.author.username.charAt(0).toUpperCase()}</span>
-      </div>
-      
+    <div class="vyre-post-inner">
+      <div class="vyre-post-avatar">${initial}</div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-baseline justify-between mb-1">
-          <h3 class="font-bold text-gray-200 truncate pr-2 tracking-tight">${post.author.username}</h3>
-          <time class="text-[10px] text-gray-600 font-mono flex-shrink-0">${time}</time>
+        <div class="vyre-post-header">
+          <span class="vyre-post-username">@${post.author.username}</span>
+          <time class="vyre-post-time">${relTime}</time>
         </div>
-        
-        <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">${post.content}</p>
-        
+        <p class="vyre-post-content">${post.content}</p>
         ${imageHtml}
-        
-        <!-- Actions -->
-        <div class="flex items-center gap-6 mt-4 text-gray-500">
-          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-brand-orange'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
-            <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-            <span class="text-xs font-mono">${post.comments}</span>
+        <div class="vyre-post-actions">
+          <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
+            <svg class="vyre-icon-heart" fill="${currentUser ? 'none' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span class="vyre-action-count">${post.likes}</span>
           </button>
-          
-          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-brand-green'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
-            <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="square" stroke-linejoin="miter" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-            <span class="text-xs font-mono">${post.likes}</span>
+          <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
+            <svg class="vyre-icon-comment" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <span class="vyre-action-count">${post.comments}</span>
           </button>
-
-          <button class="flex items-center gap-1.5 transition-colors group relative ${!currentUser ? 'opacity-50 cursor-not-allowed' : 'hover:text-gray-300'}" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
-            <svg class="w-4 h-4 ${currentUser ? 'group-hover:scale-110' : ''} transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+          <button class="vyre-action-btn" ${!currentUser ? 'disabled title="Sign in to interact"' : ''}>
+            <svg class="vyre-icon-share" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
           </button>
         </div>
-        ${!currentUser ? '<p class="text-[10px] text-gray-600 font-mono mt-2">Sign in to interact</p>' : ''}
+        ${!currentUser ? '<p class="vyre-sign-in-hint">Sign in to interact</p>' : ''}
       </div>
     </div>
   `;
